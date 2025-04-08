@@ -239,12 +239,23 @@ const NumbersGame: React.FC = () => {
   };
 
   const handleContinue = async () => {
+    if (!context) return;
+    
     try {
+      // First, complete the level and wait for it to finish
       await context.completeLevel('level3', currentScore);
+      
+      // Then update local state
       setShowLevelComplete(false);
-      navigate('/practice');
+      setCurrentScore(0);
+      setLives(3);
+      
+      // Finally, navigate
+      navigate('/practice', { replace: true });
     } catch (error) {
       console.error('Error completing level:', error);
+      // If there's an error, still try to navigate back
+      navigate('/practice', { replace: true });
     }
   };
 
