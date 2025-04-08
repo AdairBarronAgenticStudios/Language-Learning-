@@ -239,11 +239,13 @@ const NumbersGame: React.FC = () => {
   };
 
   const handleContinue = async () => {
-    await context.completeLevel('level3', currentScore);
-    setShowLevelComplete(false);
-    setTimeout(() => {
+    try {
+      await context.completeLevel('level3', currentScore);
+      setShowLevelComplete(false);
       navigate('/practice');
-    }, 100);
+    } catch (error) {
+      console.error('Error completing level:', error);
+    }
   };
 
   const speakText = (text: string) => {
@@ -406,23 +408,25 @@ const NumbersGame: React.FC = () => {
       <Dialog
         open={showLevelComplete}
         aria-labelledby="level-complete-dialog"
+        onClose={() => {}}
       >
-        <DialogTitle id="level-complete-dialog">
+        <DialogTitle id="level-complete-dialog" sx={{ textAlign: 'center' }}>
           ¡Felicitaciones! Practice Complete!
         </DialogTitle>
         <DialogContent>
-          <Typography variant="h6" gutterBottom>
+          <Typography variant="h6" gutterBottom align="center">
             Score: {currentScore}
           </Typography>
-          <Typography>
+          <Typography align="center">
             You've mastered the numbers! Ready for another challenge?
           </Typography>
         </DialogContent>
-        <DialogActions>
+        <DialogActions sx={{ justifyContent: 'center', pb: 3 }}>
           <Button 
             variant="contained" 
             color="primary" 
             onClick={handleContinue}
+            sx={{ minWidth: 120 }}
           >
             Continue
           </Button>
