@@ -9,6 +9,7 @@ import {
 import Layout from '../components/Layout';
 import BasicGreetingsGame from '../components/game/BasicGreetingsGame';
 import ColorsGame from '../components/game/ColorsGame';
+import NumbersGame from '../components/game/NumbersGame';
 
 interface PracticeSection {
   id: string;
@@ -29,6 +30,12 @@ const practiceSections: PracticeSection[] = [
     title: 'Colors',
     description: 'Practice Spanish colors with visual aids',
     component: ColorsGame
+  },
+  {
+    id: 'numbers',
+    title: 'Numbers',
+    description: 'Practice Spanish numbers and counting',
+    component: NumbersGame
   }
 ];
 

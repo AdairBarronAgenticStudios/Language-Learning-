@@ -208,16 +208,7 @@ const NumbersGame: React.FC = () => {
       // Show success message briefly
       setTimeout(() => {
         setShowSuccess(false);
-        // Move to next question
-        if (currentQuestionIndex + 1 >= shuffledQuestions.length) {
-          completeLevel('level3', currentScore + points);
-          setShowLevelComplete(true);
-        } else {
-          setCurrentQuestionIndex(prev => prev + 1);
-          setTimeLeft(QUESTION_TIME);
-          setSelectedAnswer(null);
-          setIsAnswerLocked(false);
-        }
+        nextQuestion();
       }, 1000);
     } else {
       // Decrement lives immediately in local state
@@ -232,10 +223,7 @@ const NumbersGame: React.FC = () => {
         if (newLives <= 0) {
           setShowGameOver(true);
         } else {
-          setCurrentQuestionIndex(prev => prev + 1);
-          setTimeLeft(QUESTION_TIME);
-          setSelectedAnswer(null);
-          setIsAnswerLocked(false);
+          nextQuestion();
         }
       }, 1500);
     }
