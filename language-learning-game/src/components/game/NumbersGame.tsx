@@ -108,20 +108,22 @@ const NumbersGame: React.FC = () => {
   const nextQuestion = useCallback(() => {
     if (!context) return;
     
-    if (currentQuestionIndex + 1 >= shuffledQuestions.length) {
-      // Game complete
-      context.completeLevel('level3', currentScore);
-      setShowLevelComplete(true);
-    } else if (lives <= 0) {
-      setShowGameOver(true);
-    } else {
-      setCurrentQuestionIndex(prevIndex => prevIndex + 1);
-      setTimeLeft(QUESTION_TIME);
-      setSelectedAnswer(null);
-      setIsAnswerLocked(false);
-      setShowSuccess(false);
-    }
-  }, [currentQuestionIndex, shuffledQuestions.length, context, currentScore, lives]);
+    setCurrentQuestionIndex(prevIndex => {
+      const nextIndex = prevIndex + 1;
+      if (nextIndex >= shuffledQuestions.length) {
+        // Game complete
+        context.completeLevel('level3', currentScore);
+        setShowLevelComplete(true);
+        return prevIndex; // Keep the current index
+      } else {
+        setTimeLeft(QUESTION_TIME);
+        setSelectedAnswer(null);
+        setIsAnswerLocked(false);
+        setShowSuccess(false);
+        return nextIndex;
+      }
+    });
+  }, [context, shuffledQuestions.length, currentScore]);
 
   const handleTimeout = useCallback(() => {
     if (!context || isAnswerLocked) return;
