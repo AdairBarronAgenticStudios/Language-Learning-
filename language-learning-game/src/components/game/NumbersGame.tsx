@@ -119,6 +119,7 @@ const NumbersGame: React.FC = () => {
       setTimeLeft(QUESTION_TIME);
       setSelectedAnswer(null);
       setIsAnswerLocked(false);
+      setShowSuccess(false);
     }
   }, [currentQuestionIndex, shuffledQuestions.length, context, currentScore, lives]);
 
@@ -194,7 +195,6 @@ const NumbersGame: React.FC = () => {
     setSelectedAnswer(answerIndex);
     setIsAnswerLocked(true);
     
-    const currentQuestion = shuffledQuestions[currentQuestionIndex];
     if (answerIndex === currentQuestion.correctIndex) {
       // Calculate bonus points based on remaining time
       const timeBonus = Math.floor((timeLeft / QUESTION_TIME) * POINTS_TIME_BONUS);
@@ -205,11 +205,8 @@ const NumbersGame: React.FC = () => {
       setShowSuccess(true);
       playSound.correct();
       
-      // Show success message briefly
-      setTimeout(() => {
-        setShowSuccess(false);
-        nextQuestion();
-      }, 1000);
+      // Show success message briefly then move to next question
+      setTimeout(nextQuestion, 1000);
     } else {
       // Decrement lives immediately in local state
       const newLives = lives - 1;
