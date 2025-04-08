@@ -105,18 +105,14 @@ const NumbersGame: React.FC = () => {
   );
   const [lives, setLives] = useState(3);
 
-  if (!context) {
-    return <div>Error: Game context not found</div>;
-  }
-
-  const { completeLevel, gameProgress, updateLives, updateScore } = context;
-
   const nextQuestion = useCallback(() => {
+    if (!context) return;
+    
     setCurrentQuestionIndex(prevIndex => {
       const nextIndex = prevIndex + 1;
       if (nextIndex >= shuffledQuestions.length) {
         // Game complete
-        completeLevel('level3', currentScore);
+        context.completeLevel('level3', currentScore);
         setShowLevelComplete(true);
         return prevIndex; // Keep the current index
       } else {
@@ -127,10 +123,10 @@ const NumbersGame: React.FC = () => {
         return nextIndex;
       }
     });
-  }, [shuffledQuestions.length, currentScore, completeLevel]);
+  }, [context, shuffledQuestions.length, currentScore]);
 
   const handleTimeout = useCallback(() => {
-    if (isAnswerLocked) return;
+    if (!context || isAnswerLocked) return;
     
     setIsAnswerLocked(true);
     playSound.incorrect();
@@ -138,7 +134,7 @@ const NumbersGame: React.FC = () => {
     // Update both local and global state
     setLives(prevLives => {
       const newLives = prevLives - 1;
-      updateLives(-1);
+      context.updateLives(-1);
       
       if (newLives <= 0) {
         setTimeout(() => setShowGameOver(true), 1000);
@@ -147,7 +143,7 @@ const NumbersGame: React.FC = () => {
       }
       return newLives;
     });
-  }, [isAnswerLocked, nextQuestion, updateLives]);
+  }, [context, isAnswerLocked, nextQuestion]);
 
   useEffect(() => {
     let timerId: NodeJS.Timeout | null = null;
@@ -176,7 +172,19 @@ const NumbersGame: React.FC = () => {
     }
   }, [lives]);
 
+  // Early return if no context
+  if (!context) {
+    return <div>Error: Game context not found</div>;
+  }
+
   const currentQuestion = shuffledQuestions[currentQuestionIndex];
+
+  if (!currentQuestion) {
+    return <Box sx={{ py: 4, textAlign: 'center' }}>
+      <CircularProgress />
+      <Typography>Loading questions...</Typography>
+    </Box>;
+  }
 
   const handleAnswerClick = (answerIndex: number) => {
     if (isAnswerLocked) return;
@@ -190,7 +198,7 @@ const NumbersGame: React.FC = () => {
       const points = POINTS_PER_CORRECT + timeBonus;
       
       setCurrentScore(prev => prev + points);
-      updateScore(points);
+      context.updateScore(points);
       setShowSuccess(true);
       playSound.correct();
       
@@ -202,6 +210,8 @@ const NumbersGame: React.FC = () => {
       // Decrement lives immediately in both local and global state
       setLives(prevLives => {
         const newLives = prevLives - 1;
+        context.updateLives(-1);
+        
         if (newLives <= 0) {
           setTimeout(() => setShowGameOver(true), 1000);
         } else {
@@ -209,9 +219,6 @@ const NumbersGame: React.FC = () => {
         }
         return newLives;
       });
-      
-      // Update global state
-      updateLives(-1);
     }
   };
 
@@ -228,11 +235,11 @@ const NumbersGame: React.FC = () => {
     
     // Reset lives to 3
     setLives(3);
-    updateLives(3 - gameProgress.lives);
+    context.updateLives(3 - context.gameProgress.lives);
   };
 
   const handleContinue = async () => {
-    await completeLevel('level3', currentScore);
+    await context.completeLevel('level3', currentScore);
     setShowLevelComplete(false);
     setTimeout(() => {
       navigate('/practice');
