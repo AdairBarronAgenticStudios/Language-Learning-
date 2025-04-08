@@ -1,0 +1,157 @@
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
+
+body {
+  margin: 0;
+  padding: 0;
+  font-family: 'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  background-color: #F8F9FA;
+  color: #2D3748;
+  line-height: 1.6;
+}
+
+code {
+  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
+    monospace;
+  background-color: rgba(94, 96, 206, 0.1);
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 0.9em;
+}
+
+#root {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Smooth scrolling */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Modern scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #F8F9FA;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #5E60CE;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #4244A0;
+}
+
+/* Selection color */
+::selection {
+  background: #5E60CE;
+  color: white;
+}
+
+/* Modern focus styles */
+:focus {
+  outline: none;
+}
+
+:focus-visible {
+  outline: 2px solid #5E60CE;
+  outline-offset: 2px;
+}
+
+/* Smooth transitions */
+* {
+  transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+/* Modern link styles */
+a {
+  color: #5E60CE;
+  text-decoration: none;
+  position: relative;
+}
+
+a:hover {
+  color: #4244A0;
+}
+
+a::after {
+  content: '';
+  position: absolute;
+  width: 100%;
+  height: 2px;
+  bottom: -2px;
+  left: 0;
+  background-color: #5E60CE;
+  transform: scaleX(0);
+  transform-origin: bottom right;
+  transition: transform 0.3s ease;
+}
+
+a:hover::after {
+  transform: scaleX(1);
+  transform-origin: bottom left;
+}
+
+/* Colorful accents */
+.color-accent-1 {
+  color: #5E60CE;
+}
+
+.color-accent-2 {
+  color: #FF6B6B;
+}
+
+.color-accent-3 {
+  color: #06D6A0;
+}
+
+.color-accent-4 {
+  color: #EF476F;
+}
+
+.color-accent-5 {
+  color: #FFD166;
+}
+
+.color-accent-6 {
+  color: #4ECDC4;
+}
+
+/* Gradient backgrounds */
+.gradient-primary {
+  background: linear-gradient(90deg, #5E60CE 0%, #4ECDC4 100%);
+  color: white;
+}
+
+.gradient-secondary {
+  background: linear-gradient(90deg, #FF6B6B 0%, #FFD166 100%);
+  color: white;
+}
+
+.gradient-success {
+  background: linear-gradient(90deg, #06D6A0 0%, #4ECDC4 100%);
+  color: white;
+}
+
+/* Subtle shadows */
+.shadow-sm {
+  box-shadow: 0px 2px 8px rgba(94, 96, 206, 0.1);
+}
+
+.shadow-md {
+  box-shadow: 0px 4px 12px rgba(94, 96, 206, 0.15);
+}
+
+.shadow-lg {
+  box-shadow: 0px 8px 24px rgba(94, 96, 206, 0.2);
+}
