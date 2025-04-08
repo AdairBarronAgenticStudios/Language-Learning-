@@ -210,21 +210,21 @@ const NumbersGame: React.FC = () => {
       // Show success message briefly then move to next question
       setTimeout(nextQuestion, 1000);
     } else {
-      // Decrement lives immediately in local state
-      const newLives = lives - 1;
-      setLives(newLives);
+      playSound.incorrect();
+      
+      // Decrement lives immediately in both local and global state
+      setLives(prevLives => {
+        const newLives = prevLives - 1;
+        if (newLives <= 0) {
+          setTimeout(() => setShowGameOver(true), 1000);
+        } else {
+          setTimeout(nextQuestion, 1500);
+        }
+        return newLives;
+      });
+      
       // Update global state
       updateLives(-1);
-      playSound.incorrect();
-
-      // Wait before moving to next question or showing game over
-      setTimeout(() => {
-        if (newLives <= 0) {
-          setShowGameOver(true);
-        } else {
-          nextQuestion();
-        }
-      }, 1500);
     }
   };
 
