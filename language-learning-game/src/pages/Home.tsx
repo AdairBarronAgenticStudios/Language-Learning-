@@ -52,7 +52,7 @@ const Home: React.FC = () => {
                   variant="contained" 
                   size="large"
                   fullWidth
-                  onClick={() => navigate('/game')}
+                  onClick={() => navigate('/practice')}
                 >
                   Play Now
                 </Button>
