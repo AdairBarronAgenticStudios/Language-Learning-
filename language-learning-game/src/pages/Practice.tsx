@@ -10,7 +10,6 @@ import Layout from '../components/Layout';
 import BasicGreetingsGame from '../components/game/BasicGreetingsGame';
 import ColorsGame from '../components/game/ColorsGame';
 import NumbersGame from '../components/game/NumbersGame';
-import RoleplayGame from '../components/game/RoleplayGame';
 
 interface PracticeSection {
   id: string;
@@ -37,12 +36,6 @@ const practiceSections: PracticeSection[] = [
     title: 'Numbers',
     description: 'Practice Spanish numbers and counting',
     component: NumbersGame
-  },
-  {
-    id: 'roleplay_restaurant',
-    title: 'Roleplay: Restaurant',
-    description: 'Practice ordering food in a Spanish restaurant scenario',
-    component: RoleplayGame
   }
 ];
 
