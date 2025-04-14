@@ -186,7 +186,7 @@ const Learn: React.FC = () => {
               Available Lessons
             </Typography>
             <List>
-              {vocabularyLessons
+              {(selectedType === 'vocabulary' ? vocabularyLessons : [])
                 .filter(lesson => lesson.level === selectedLevel)
                 .map(lesson => {
                   const completed = isLessonCompleted(lesson.id);
@@ -224,6 +224,16 @@ const Learn: React.FC = () => {
                     </ListItem>
                   );
                 })}
+                {selectedType !== 'vocabulary' && (
+                  <Typography variant="body1" color="text.secondary" align="center" sx={{ py: 3 }}>
+                    Lessons for {selectedType} will be coming soon!
+                  </Typography>
+                )}
+                {selectedType === 'vocabulary' && vocabularyLessons.filter(lesson => lesson.level === selectedLevel).length === 0 && (
+                  <Typography variant="body1" color="text.secondary" align="center" sx={{ py: 3 }}>
+                    No vocabulary lessons available for this level yet. More coming soon!
+                  </Typography>
+                )}
             </List>
           </Box>
         </Dialog>
