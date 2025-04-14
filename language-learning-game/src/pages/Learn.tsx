@@ -6,9 +6,38 @@ import {
   CardContent,
   Button,
   Chip,
+  Dialog,
+  List,
+  ListItem,
+  ListItemText,
+  ListItemIcon,
 } from '@mui/material';
 import Layout from '../components/Layout';
 import { LessonType, LanguageLevel } from '../types';
+import FamilyVocabulary from '../components/lessons/vocabulary/FamilyVocabulary';
+import CheckCircleIcon from '@mui/icons-material/CheckCircle';
+import LockIcon from '@mui/icons-material/Lock';
+import { useGame } from '../contexts/GameContext';
+
+interface Lesson {
+  id: string;
+  title: string;
+  description: string;
+  component: React.ComponentType;
+  level: LanguageLevel;
+  prerequisite?: string;
+}
+
+const vocabularyLessons: Lesson[] = [
+  {
+    id: 'vocabulary_family',
+    title: 'Family Members',
+    description: 'Learn essential vocabulary for family relationships',
+    component: FamilyVocabulary,
+    level: 'beginner',
+  },
+  // More lessons will be added here
+];
 
 const lessonTypes: { type: LessonType; label: string; description: string }[] = [
   {
@@ -34,7 +63,51 @@ const lessonTypes: { type: LessonType; label: string; description: string }[] = 
 ];
 
 const Learn: React.FC = () => {
+  const context = useGame();
   const [selectedLevel, setSelectedLevel] = useState<LanguageLevel>('beginner');
+  const [selectedType, setSelectedType] = useState<LessonType | null>(null);
+  const [selectedLesson, setSelectedLesson] = useState<Lesson | null>(null);
+  const [showLessons, setShowLessons] = useState(false);
+
+  const handleStartLesson = (type: LessonType) => {
+    setSelectedType(type);
+    setShowLessons(true);
+  };
+
+  const handleSelectLesson = (lesson: Lesson) => {
+    setSelectedLesson(lesson);
+    setShowLessons(false);
+  };
+
+  const handleBackToLessons = () => {
+    setSelectedLesson(null);
+    setSelectedType(null);
+  };
+
+  const isLessonCompleted = (lessonId: string) => {
+    return context?.gameProgress.completedLevels.includes(lessonId) || false;
+  };
+
+  const isLessonUnlocked = (lesson: Lesson) => {
+    if (!lesson.prerequisite) return true;
+    return isLessonCompleted(lesson.prerequisite);
+  };
+
+  if (selectedLesson) {
+    const LessonComponent = selectedLesson.component;
+    return (
+      <Layout>
+        <Box sx={{ py: 4 }}>
+          <Box sx={{ mb: 2 }}>
+            <Button onClick={handleBackToLessons} variant="outlined">
+              Back to Lessons
+            </Button>
+          </Box>
+          <LessonComponent />
+        </Box>
+      </Layout>
+    );
+  }
 
   return (
     <Layout title="Learning Mode">
@@ -93,7 +166,7 @@ const Learn: React.FC = () => {
                 <Button 
                   variant="contained" 
                   fullWidth
-                  onClick={() => console.log(`Start ${type} lesson`)}
+                  onClick={() => handleStartLesson(type)}
                 >
                   Start Lesson
                 </Button>
@@ -101,6 +174,59 @@ const Learn: React.FC = () => {
             </Card>
           ))}
         </Box>
+
+        <Dialog 
+          open={showLessons} 
+          onClose={() => setShowLessons(false)}
+          maxWidth="sm"
+          fullWidth
+        >
+          <Box sx={{ p: 3 }}>
+            <Typography variant="h5" gutterBottom>
+              Available Lessons
+            </Typography>
+            <List>
+              {vocabularyLessons
+                .filter(lesson => lesson.level === selectedLevel)
+                .map(lesson => {
+                  const completed = isLessonCompleted(lesson.id);
+                  const unlocked = isLessonUnlocked(lesson);
+                  
+                  return (
+                    <ListItem 
+                      key={lesson.id}
+                      sx={{
+                        border: '1px solid',
+                        borderColor: 'divider',
+                        borderRadius: 1,
+                        mb: 1,
+                        opacity: unlocked ? 1 : 0.7,
+                      }}
+                    >
+                      <ListItemText
+                        primary={lesson.title}
+                        secondary={lesson.description}
+                      />
+                      <ListItemIcon>
+                        {completed ? (
+                          <CheckCircleIcon color="success" />
+                        ) : unlocked ? null : (
+                          <LockIcon color="disabled" />
+                        )}
+                      </ListItemIcon>
+                      <Button
+                        variant="contained"
+                        onClick={() => handleSelectLesson(lesson)}
+                        disabled={!unlocked}
+                      >
+                        {completed ? 'Review' : 'Start'}
+                      </Button>
+                    </ListItem>
+                  );
+                })}
+            </List>
+          </Box>
+        </Dialog>
       </Box>
     </Layout>
   );
