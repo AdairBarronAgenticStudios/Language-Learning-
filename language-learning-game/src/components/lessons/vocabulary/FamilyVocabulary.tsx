@@ -74,6 +74,26 @@ const FamilyVocabulary: React.FC = () => {
   const [lessonComplete, setLessonComplete] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
 
+  // Initialize speech synthesis voices
+  React.useEffect(() => {
+    const initVoices = () => {
+      // Load voices if they're not already loaded
+      if (window.speechSynthesis.getVoices().length === 0) {
+        window.speechSynthesis.addEventListener('voiceschanged', () => {
+          // Voices are now loaded
+          console.log('Voices loaded:', window.speechSynthesis.getVoices().length);
+        });
+      }
+    };
+
+    initVoices();
+    
+    // Cleanup function to cancel any ongoing speech when component unmounts
+    return () => {
+      window.speechSynthesis.cancel();
+    };
+  }, []);
+
   const progress = ((currentIndex + 1) / familyVocabulary.length) * 100;
 
   const handleNext = useCallback(() => {
@@ -108,7 +128,21 @@ const FamilyVocabulary: React.FC = () => {
     setIsPlaying(true);
     const utterance = new SpeechSynthesisUtterance(text);
     utterance.lang = 'es-ES'; // Set language to Spanish
-    utterance.rate = 0.8; // Slightly slower rate for better clarity
+    utterance.rate = 0.7; // Even slower rate for better clarity
+    utterance.pitch = 1.0; // Natural pitch
+    utterance.volume = 1.0; // Maximum volume
+
+    // Try to find a Spanish female voice for better clarity
+    const voices = window.speechSynthesis.getVoices();
+    const spanishVoice = voices.find(voice => 
+      voice.lang.startsWith('es') && voice.name.includes('Monica')
+    ) || voices.find(voice => 
+      voice.lang.startsWith('es')
+    );
+
+    if (spanishVoice) {
+      utterance.voice = spanishVoice;
+    }
 
     utterance.onend = () => {
       setIsPlaying(false);
@@ -119,7 +153,13 @@ const FamilyVocabulary: React.FC = () => {
       setIsPlaying(false);
     };
 
-    window.speechSynthesis.speak(utterance);
+    // Cancel any ongoing speech
+    window.speechSynthesis.cancel();
+    
+    // Small delay to ensure clean start
+    setTimeout(() => {
+      window.speechSynthesis.speak(utterance);
+    }, 50);
   };
 
   const currentWord = familyVocabulary[currentIndex];
