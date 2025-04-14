@@ -157,8 +157,7 @@ const Learn: React.FC = () => {
   };
 
   const isLessonUnlocked = (lesson: Lesson) => {
-    if (!lesson.prerequisite) return true;
-    return isLessonCompleted(lesson.prerequisite);
+    return true;
   };
 
   if (selectedLesson) {
