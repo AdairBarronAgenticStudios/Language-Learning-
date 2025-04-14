@@ -725,6 +725,82 @@ const RoleplayGame: React.FC = () => {
      )
   }
 
+  // Move the +10 display to only show after a correct answer selection
+  const renderUserOptions = () => {
+    return (
+      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, my: 2 }}>
+        {currentStep.userOptions.map((option, index) => (
+          <Button
+            key={index}
+            variant="contained"
+            onClick={() => handleUserResponse(option.correct, option.text)}
+            sx={{
+              bgcolor: '#6C63FF',
+              borderRadius: '50px',
+              textTransform: 'none',
+              fontSize: '1rem',
+              py: 1.5,
+              px: 3,
+              boxShadow: '0 4px 10px rgba(108, 99, 255, 0.2)',
+              alignSelf: 'flex-end',
+              maxWidth: '80%',
+              textAlign: 'left',
+              '&:hover': {
+                bgcolor: '#5A52E0',
+                transform: 'translateY(-2px)',
+                transition: 'all 0.2s',
+              },
+            }}
+          >
+            {option.text}
+          </Button>
+        ))}
+      </Box>
+    );
+  };
+
+  // Add the +10 indicator to the feedback for correct answers
+  const renderFeedback = () => {
+    if (!feedback.text) return null;
+    
+    return (
+      <Box 
+        sx={{ 
+          my: 2, 
+          p: 2, 
+          borderRadius: 2, 
+          bgcolor: feedback.type === 'correct' ? 'rgba(76, 175, 80, 0.1)' : 'rgba(244, 67, 54, 0.1)',
+          border: `1px solid ${feedback.type === 'correct' ? '#4CAF50' : '#F44336'}`,
+          animation: 'fadeIn 0.5s ease-in-out',
+          '@keyframes fadeIn': {
+            '0%': { opacity: 0, transform: 'translateY(10px)' },
+            '100%': { opacity: 1, transform: 'translateY(0)' },
+          },
+        }}
+      >
+        {feedback.type === 'correct' && (
+          <Typography 
+            variant="subtitle1" 
+            sx={{ 
+              display: 'flex', 
+              alignItems: 'center', 
+              color: '#4CAF50', 
+              fontWeight: 'bold',
+              mb: 1
+            }}
+          >
+            <span style={{ marginRight: '8px' }}>+10</span> {feedback.text}
+          </Typography>
+        )}
+        {feedback.type === 'incorrect' && (
+          <Typography variant="subtitle1" sx={{ color: '#F44336' }}>
+            {feedback.text}
+          </Typography>
+        )}
+      </Box>
+    );
+  };
+
   return (
     <>
       <Box 
@@ -993,50 +1069,7 @@ const RoleplayGame: React.FC = () => {
 
                   {/* Dialogue Options - with enhanced button styling */}
                   {inputMethod === 'tap' && currentStep.userOptions.length > 0 && (
-                    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5, alignItems: 'flex-end', width: '100%' }}>
-                        {currentStep.userOptions.map((option, index) => (
-                            <Button
-                                key={index}
-                                variant="contained"
-                                onClick={() => handleUserResponse(option.correct, option.text)}
-                                sx={{ 
-                                  borderRadius: '24px', 
-                                  textTransform: 'none', 
-                                  maxWidth: isMobile ? '100%' : '85%',
-                                  py: 1.2,
-                                  px: 2.5,
-                                  bgcolor: option.correct ? '#5E60CE' : '#7678ED',
-                                  boxShadow: '0 3px 8px rgba(94, 96, 206, 0.3)',
-                                  '&:hover': {
-                                    bgcolor: option.correct ? '#4244A0' : '#5658CD',
-                                    transform: 'translateY(-2px)',
-                                    boxShadow: '0 5px 12px rgba(94, 96, 206, 0.4)',
-                                  },
-                                  transition: 'all 0.2s ease',
-                                  position: 'relative',
-                                  pl: option.rewardPoints ? 4.5 : 2.5, // Extra padding for reward indicator
-                                }}
-                            >
-                                {option.rewardPoints && option.rewardPoints > 5 && (
-                                  <Box sx={{
-                                    position: 'absolute',
-                                    left: 8,
-                                    top: '50%',
-                                    transform: 'translateY(-50%)',
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    justifyContent: 'center',
-                                    color: '#FFD700', 
-                                    fontSize: '0.75rem',
-                                    fontWeight: 'bold'
-                                  }}>
-                                    +{option.rewardPoints}
-                                  </Box>
-                                )}
-                                {option.text}
-                            </Button>
-                        ))}
-                    </Box>
+                    renderUserOptions()
                   )}
 
                   {/* Speech Input Feedback - with enhanced styling */}
@@ -1090,22 +1123,7 @@ const RoleplayGame: React.FC = () => {
           </Paper>
 
           {/* Feedback Area - with enhanced styling */}
-          <Typography 
-              sx={{
-                  visibility: feedback.text ? 'visible' : 'hidden',
-                  height: '2rem',
-                  mt: 2.5, 
-                  mb: 1.5,
-                  fontWeight: 'bold', 
-                  textAlign: 'center',
-                  fontSize: '1.1rem',
-                  color: feedback.type === 'correct' ? 'success.main' : (feedback.type === 'incorrect' ? 'error.main' : 'text.secondary'),
-                  textShadow: feedback.type === 'correct' ? '0 1px 4px rgba(6, 214, 160, 0.2)' : (feedback.type === 'incorrect' ? '0 1px 4px rgba(239, 71, 111, 0.2)' : 'none'),
-                  animation: feedback.text ? 'fadeIn 0.3s ease-in-out' : 'none',
-              }}
-          >
-              {feedback.text}
-          </Typography>
+          {renderFeedback()}
 
           {/* Hint button - appears after incorrect answers */}
           {showHint && (
