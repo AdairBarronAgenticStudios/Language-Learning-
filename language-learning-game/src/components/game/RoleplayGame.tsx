@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback, useContext } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Box,
@@ -22,7 +22,7 @@ import MicIcon from '@mui/icons-material/Mic';
 import StopIcon from '@mui/icons-material/Stop';
 import KeyboardIcon from '@mui/icons-material/Keyboard';
 import EmojiEventsIcon from '@mui/icons-material/EmojiEvents';
-import GameContext, { useGame } from '../../contexts/GameContext';
+import { useGame } from '../../contexts/GameContext';
 // Import Layout or other necessary components if needed
 // import Layout from '../Layout'; 
 

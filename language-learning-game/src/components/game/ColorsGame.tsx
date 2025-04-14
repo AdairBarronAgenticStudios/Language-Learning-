@@ -16,7 +16,7 @@ import {
 } from '@mui/material';
 import { VolumeUp as VolumeUpIcon } from '@mui/icons-material';
 import { useGame } from '../../contexts/GameContext';
-import { playSound, preloadAudio } from '../../utils/audio';
+import { playSound } from '../../utils/audio';
 import { useNavigate } from 'react-router-dom';
 
 interface Color {
