@@ -107,55 +107,51 @@ const NumbersGame: React.FC = () => {
 
   const nextQuestion = useCallback(() => {
     if (!context) {
-      console.log('nextQuestion: No context available');
       return;
     }
     
-    console.log('nextQuestion: Called with currentQuestionIndex:', currentQuestionIndex);
     setCurrentQuestionIndex(prevIndex => {
       const nextIndex = prevIndex + 1;
-      console.log(`nextQuestion: Calculating next index. Current: ${prevIndex}, Next: ${nextIndex}, Total Questions: ${shuffledQuestions.length}`);
       
       if (nextIndex >= shuffledQuestions.length) {
-        console.log('nextQuestion: Reached end of questions, showing completion dialog');
         setShowLevelComplete(true);
         return prevIndex;
-      } else {
-        console.log('nextQuestion: Moving to next question:', nextIndex);
-        setTimeLeft(QUESTION_TIME);
-        setSelectedAnswer(null);
-        setIsAnswerLocked(false);
-        setShowSuccess(false);
-        return nextIndex;
       }
+      
+      setTimeLeft(QUESTION_TIME);
+      setSelectedAnswer(null);
+      setIsAnswerLocked(false);
+      setShowSuccess(false);
+      return nextIndex;
     });
   }, [context, shuffledQuestions.length]);
 
   const handleTimeout = useCallback(() => {
     if (!context || isAnswerLocked) {
-      console.log('handleTimeout: Blocked -', !context ? 'No context' : 'Answer locked');
       return;
     }
     
-    console.log('handleTimeout: Time expired for question:', currentQuestionIndex);
+    // Mark the question as timed out
     setIsAnswerLocked(true);
-    playSound.incorrect();
     
+    // Reduce lives
     setLives(prevLives => {
       const newLives = prevLives - 1;
-      console.log(`handleTimeout: Decreasing lives from ${prevLives} to ${newLives}`);
       context.updateLives(-1);
       
       if (newLives <= 0) {
-        console.log('handleTimeout: Game over - no lives remaining');
-        setTimeout(() => setShowGameOver(true), 1000);
-      } else {
-        console.log('handleTimeout: Moving to next question after timeout');
-        setTimeout(nextQuestion, 1500);
+        setShowGameOver(true);
+        return 0;
       }
+      
+      // Move to next question after a delay
+      setTimeout(() => {
+        nextQuestion();
+      }, 1500);
+      
       return newLives;
     });
-  }, [context, isAnswerLocked, nextQuestion, currentQuestionIndex]);
+  }, [context, isAnswerLocked, nextQuestion]);
 
   useEffect(() => {
     let timerId: NodeJS.Timeout | null = null;
@@ -200,54 +196,59 @@ const NumbersGame: React.FC = () => {
 
   const handleAnswerClick = (answerIndex: number) => {
     if (isAnswerLocked) {
-      console.log('handleAnswerClick: Blocked - Answer already locked');
       return;
     }
     
-    console.log(`handleAnswerClick: Selected answer ${answerIndex} for question ${currentQuestionIndex}`);
     setSelectedAnswer(answerIndex);
     setIsAnswerLocked(true);
     
     if (answerIndex === currentQuestion.correctIndex) {
+      // Correct answer
+      playSound.correct();
+      
+      // Calculate points with time bonus
       const timeBonus = Math.floor((timeLeft / QUESTION_TIME) * POINTS_TIME_BONUS);
       const points = POINTS_PER_CORRECT + timeBonus;
       
-      console.log(`handleAnswerClick: Correct answer! Points: ${points} (Base: ${POINTS_PER_CORRECT}, Time Bonus: ${timeBonus})`);
+      // Update score
       setCurrentScore(prev => {
         const newScore = prev + points;
-        console.log(`handleAnswerClick: Updating score from ${prev} to ${newScore}`);
+        context?.updateScore(points);
         return newScore;
       });
       
-      context.updateScore(points);
+      // Show success message
       setShowSuccess(true);
-      playSound.correct();
       
-      console.log('handleAnswerClick: Moving to next question after correct answer');
-      setTimeout(nextQuestion, 1000);
+      // Move to next question after a delay
+      setTimeout(() => {
+        nextQuestion();
+      }, 1500);
     } else {
-      console.log(`handleAnswerClick: Incorrect answer. Selected: ${answerIndex}, Correct: ${currentQuestion.correctIndex}`);
+      // Incorrect answer
       playSound.incorrect();
       
+      // Reduce lives
       setLives(prevLives => {
         const newLives = prevLives - 1;
-        console.log(`handleAnswerClick: Decreasing lives from ${prevLives} to ${newLives}`);
-        context.updateLives(-1);
+        context?.updateLives(-1);
         
         if (newLives <= 0) {
-          console.log('handleAnswerClick: Game over - no lives remaining');
-          setTimeout(() => setShowGameOver(true), 1000);
-        } else {
-          console.log('handleAnswerClick: Moving to next question after incorrect answer');
-          setTimeout(nextQuestion, 1500);
+          setShowGameOver(true);
+          return 0;
         }
+        
+        // Move to next question after a delay
+        setTimeout(() => {
+          nextQuestion();
+        }, 1500);
+        
         return newLives;
       });
     }
   };
 
   const resetGame = () => {
-    console.log('resetGame: Initializing game reset');
     const shuffled = [...questions].sort(() => Math.random() - 0.5);
     setShuffledQuestions(shuffled);
     setCurrentQuestionIndex(0);
@@ -259,31 +260,17 @@ const NumbersGame: React.FC = () => {
     setIsAnswerLocked(false);
     setLives(3);
     context.updateLives(3 - context.gameProgress.lives);
-    console.log('resetGame: Game state reset complete');
   };
 
   const handleContinue = async () => {
     if (!context) {
-      console.error('handleContinue: No context available');
       return;
     }
     
-    console.log('handleContinue: Starting level completion process');
-    console.log('Current state:', {
-      currentScore,
-      lives,
-      currentQuestionIndex,
-      isAnswerLocked,
-      showLevelComplete: true
-    });
-    
     try {
-      console.log(`handleContinue: Attempting to complete numbers practice with score ${currentScore}`);
       await context.completeLevel('numbers', currentScore);
-      console.log('handleContinue: Level completion successful');
       
       // Reset all state before navigation
-      console.log('handleContinue: Resetting game state');
       setShowLevelComplete(false);
       setCurrentScore(0);
       setLives(3);
@@ -294,20 +281,15 @@ const NumbersGame: React.FC = () => {
       setShowSuccess(false);
       
       // Force a small delay to ensure state updates are processed
-      console.log('handleContinue: Adding small delay before navigation');
       await new Promise(resolve => setTimeout(resolve, 100));
       
-      console.log('handleContinue: Navigating to /practice');
       // Try using window.location as a fallback if navigate doesn't work
       try {
         navigate('/practice', { replace: true });
       } catch (navError) {
-        console.error('handleContinue: Navigation failed, using window.location', navError);
         window.location.href = '/practice';
       }
     } catch (error) {
-      console.error('handleContinue: Error during level completion:', error);
-      console.log('handleContinue: Attempting navigation despite error');
       window.location.href = '/practice';
     }
   };

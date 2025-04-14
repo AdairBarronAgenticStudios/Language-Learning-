@@ -1,22 +1,29 @@
-// Create Audio objects for our sound effects
-const correctSound = new Audio('https://assets.mixkit.co/active_storage/sfx/2013/2013-preview.mp3');
-const incorrectSound = new Audio('https://assets.mixkit.co/active_storage/sfx/2018/2018-preview.mp3');
-const levelCompleteSound = new Audio('https://assets.mixkit.co/active_storage/sfx/1435/1435-preview.mp3');
-
-// Configure sounds
-correctSound.volume = 0.5;
-incorrectSound.volume = 0.3;
-levelCompleteSound.volume = 0.7;
-
-export const playSound = {
-  correct: () => correctSound.play().catch(e => console.log('Audio playback failed:', e)),
-  incorrect: () => incorrectSound.play().catch(e => console.log('Audio playback failed:', e)),
-  levelComplete: () => levelCompleteSound.play().catch(e => console.log('Audio playback failed:', e)),
+// Audio objects for sound effects
+const sounds = {
+  correct: new Audio('/sounds/correct.mp3'),
+  incorrect: new Audio('/sounds/incorrect.mp3'),
+  levelComplete: new Audio('/sounds/level-complete.mp3')
 };
 
-// Function to preload all audio files
-export const preloadAudio = () => {
-  correctSound.load();
-  incorrectSound.load();
-  levelCompleteSound.load();
+// Function to play sounds
+export const playSound = {
+  correct: () => {
+    sounds.correct.currentTime = 0;
+    sounds.correct.play();
+  },
+  incorrect: () => {
+    sounds.incorrect.currentTime = 0;
+    sounds.incorrect.play();
+  },
+  levelComplete: () => {
+    sounds.levelComplete.currentTime = 0;
+    sounds.levelComplete.play();
+  }
+};
+
+// Preload sounds
+export const preloadSounds = () => {
+  Object.values(sounds).forEach(sound => {
+    sound.load();
+  });
 }; 
