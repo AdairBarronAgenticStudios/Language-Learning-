@@ -15,6 +15,7 @@ import {
 import Layout from '../components/Layout';
 import { LessonType, LanguageLevel } from '../types';
 import FamilyVocabulary from '../components/lessons/vocabulary/FamilyVocabulary';
+import CommonObjects from '../components/lessons/vocabulary/CommonObjects';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import LockIcon from '@mui/icons-material/Lock';
 import { useGame } from '../contexts/GameContext';
@@ -35,6 +36,14 @@ const vocabularyLessons: Lesson[] = [
     description: 'Learn essential vocabulary for family relationships',
     component: FamilyVocabulary,
     level: 'beginner',
+  },
+  {
+    id: 'vocabulary_objects',
+    title: 'Common Objects',
+    description: 'Learn vocabulary for everyday objects around you',
+    component: CommonObjects,
+    level: 'beginner',
+    prerequisite: 'vocabulary_family', // Must complete family vocabulary first
   },
   // More lessons will be added here
 ];
