@@ -102,9 +102,15 @@ const FamilyVocabulary: React.FC = () => {
       setShowExample(false);
       setShowTranslation(false);
     } else {
+      // Complete the lesson immediately when clicking Complete
       setLessonComplete(true);
       if (context) {
-        context.completeLevel('vocabulary_family', 100);
+        // Ensure the level is completed in the context
+        Promise.resolve(context.completeLevel('vocabulary_1', 100)).then(() => {
+          console.log('Family vocabulary lesson completed successfully');
+        }).catch((error: Error) => {
+          console.error('Error completing family vocabulary lesson:', error);
+        });
       }
     }
   }, [currentIndex, context]);
@@ -117,10 +123,25 @@ const FamilyVocabulary: React.FC = () => {
     }
   };
 
-  const handleComplete = () => {
-    // Navigate back to the vocabulary menu
-    window.location.href = '/learn';
-  };
+  const handleComplete = useCallback(() => {
+    if (context) {
+      // Ensure the level is completed and next level is unlocked before navigating
+      Promise.resolve(context.completeLevel('vocabulary_1', 100))
+        .then(() => {
+          console.log('Family vocabulary lesson completed successfully');
+          // Navigate back to the vocabulary menu
+          window.location.href = '/learn';
+        })
+        .catch((error: Error) => {
+          console.error('Error completing family vocabulary lesson:', error);
+          // Still navigate even if there's an error
+          window.location.href = '/learn';
+        });
+    } else {
+      // If no context, just navigate
+      window.location.href = '/learn';
+    }
+  }, [context]);
 
   const pronounceWord = (text: string) => {
     if (isPlaying) return; // Prevent multiple simultaneous pronunciations
@@ -276,7 +297,7 @@ const FamilyVocabulary: React.FC = () => {
           <Button
             variant="contained"
             onClick={handleNext}
-            disabled={currentIndex === familyVocabulary.length - 1 && !showTranslation}
+            disabled={currentIndex === familyVocabulary.length - 1 && lessonComplete}
           >
             {currentIndex === familyVocabulary.length - 1 ? 'Complete' : 'Next'}
           </Button>

@@ -15,7 +15,9 @@ import {
 import Layout from '../components/Layout';
 import { LessonType, LanguageLevel } from '../types';
 import FamilyVocabulary from '../components/lessons/vocabulary/FamilyVocabulary';
-import CommonObjects from '../components/lessons/vocabulary/CommonObjects';
+import BasicVerbs from '../components/lessons/grammar/BasicVerbs';
+import BasicPronunciation from '../components/lessons/speaking/BasicPronunciation';
+import BasicConversations from '../components/lessons/listening/BasicConversations';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import LockIcon from '@mui/icons-material/Lock';
 import { useGame } from '../contexts/GameContext';
@@ -31,19 +33,44 @@ interface Lesson {
 
 const vocabularyLessons: Lesson[] = [
   {
-    id: 'vocabulary_family',
+    id: 'vocabulary_1',
     title: 'Family Members',
     description: 'Learn essential vocabulary for family relationships',
     component: FamilyVocabulary,
     level: 'beginner',
   },
+  // More lessons will be added here
+];
+
+const grammarLessons: Lesson[] = [
   {
-    id: 'vocabulary_objects',
-    title: 'Common Objects',
-    description: 'Learn vocabulary for everyday objects around you',
-    component: CommonObjects,
+    id: 'grammar_1',
+    title: 'Basic Verbs',
+    description: 'Learn essential Spanish verbs and their conjugations',
+    component: BasicVerbs,
     level: 'beginner',
-    prerequisite: 'vocabulary_family', // Must complete family vocabulary first
+  },
+  // More lessons will be added here
+];
+
+const speakingLessons: Lesson[] = [
+  {
+    id: 'speaking_1',
+    title: 'Basic Pronunciation',
+    description: 'Learn essential Spanish pronunciation rules and sounds',
+    component: BasicPronunciation,
+    level: 'beginner',
+  },
+  // More lessons will be added here
+];
+
+const listeningLessons: Lesson[] = [
+  {
+    id: 'listening_1',
+    title: 'Basic Conversations',
+    description: 'Practice listening to and understanding simple Spanish conversations',
+    component: BasicConversations,
+    level: 'beginner',
   },
   // More lessons will be added here
 ];
@@ -195,7 +222,10 @@ const Learn: React.FC = () => {
               Available Lessons
             </Typography>
             <List>
-              {(selectedType === 'vocabulary' ? vocabularyLessons : [])
+              {((selectedType === 'vocabulary' ? vocabularyLessons : 
+                 selectedType === 'grammar' ? grammarLessons :
+                 selectedType === 'speaking' ? speakingLessons :
+                 selectedType === 'listening' ? listeningLessons : []))
                 .filter(lesson => lesson.level === selectedLevel)
                 .map(lesson => {
                   const completed = isLessonCompleted(lesson.id);
@@ -233,14 +263,19 @@ const Learn: React.FC = () => {
                     </ListItem>
                   );
                 })}
-                {selectedType !== 'vocabulary' && (
+                {!['vocabulary', 'grammar', 'speaking', 'listening'].includes(selectedType || '') && (
                   <Typography variant="body1" color="text.secondary" align="center" sx={{ py: 3 }}>
                     Lessons for {selectedType} will be coming soon!
                   </Typography>
                 )}
-                {selectedType === 'vocabulary' && vocabularyLessons.filter(lesson => lesson.level === selectedLevel).length === 0 && (
+                {['vocabulary', 'grammar', 'speaking', 'listening'].includes(selectedType || '') && 
+                 (selectedType === 'vocabulary' ? vocabularyLessons :
+                  selectedType === 'grammar' ? grammarLessons :
+                  selectedType === 'speaking' ? speakingLessons :
+                  listeningLessons)
+                   .filter(lesson => lesson.level === selectedLevel).length === 0 && (
                   <Typography variant="body1" color="text.secondary" align="center" sx={{ py: 3 }}>
-                    No vocabulary lessons available for this level yet. More coming soon!
+                    No {selectedType} lessons available for this level yet. More coming soon!
                   </Typography>
                 )}
             </List>
