@@ -449,24 +449,80 @@ const RoleplayGame: React.FC = () => {
   // Function to speak text using speech synthesis
   const speak = useCallback((text: string) => {
     if (!window.speechSynthesis) {
+      console.error('Speech synthesis not supported');
       setSnackbarMessage('Speech synthesis not supported in your browser');
       setSnackbarOpen(true);
       return;
     }
     
+    // Cancel any ongoing speech
+    window.speechSynthesis.cancel();
+    
     const utterance = new SpeechSynthesisUtterance(text);
     utterance.lang = 'es-ES';
-    utterance.rate = 0.9;  // Slightly slower for language learning
+    utterance.rate = 0.9; // Slightly slower for language learning
+    utterance.pitch = 1.1; // Slightly higher pitch for better clarity
+    utterance.volume = 1.0; // Maximum volume
     
     // Get Spanish voice if available
-    const voices = window.speechSynthesis.getVoices();
-    const spanishVoice = voices.find(voice => voice.lang.includes('es'));
-    if (spanishVoice) {
-      utterance.voice = spanishVoice;
+    let voices = window.speechSynthesis.getVoices();
+    console.log('Available voices:', voices.map(v => `${v.name} (${v.lang})`).join(', '));
+    
+    // If voices array is empty, force voices to load and try again
+    if (voices.length === 0) {
+      window.speechSynthesis.onvoiceschanged = () => {
+        voices = window.speechSynthesis.getVoices();
+        console.log('Voices loaded after change:', voices.map(v => `${v.name} (${v.lang})`).join(', '));
+        const spanishVoice = voices.find(voice => voice.lang.includes('es'));
+        console.log('Selected Spanish voice:', spanishVoice?.name);
+        
+        if (spanishVoice) {
+          utterance.voice = spanishVoice;
+        }
+        
+        console.log('Speaking text:', text);
+        window.speechSynthesis.speak(utterance);
+      };
+      
+      // Trigger onvoiceschanged
+      window.speechSynthesis.getVoices();
+    } else {
+      const spanishVoice = voices.find(voice => voice.lang.includes('es'));
+      console.log('Selected Spanish voice:', spanishVoice?.name);
+      
+      if (spanishVoice) {
+        utterance.voice = spanishVoice;
+      }
+      
+      console.log('Speaking text:', text);
+      window.speechSynthesis.speak(utterance);
     }
     
-    window.speechSynthesis.speak(utterance);
+    // Add event listeners for debugging
+    utterance.onstart = () => console.log('Speech started');
+    utterance.onend = () => console.log('Speech ended');
+    utterance.onerror = (event) => console.error('Speech error:', event);
   }, [setSnackbarMessage, setSnackbarOpen]);
+
+  // Initialize voices when component mounts
+  useEffect(() => {
+    if (window.speechSynthesis) {
+      // Force load voices
+      const loadVoices = () => {
+        const voices = window.speechSynthesis.getVoices();
+        console.log('Initial voices loaded:', voices.length);
+      };
+      
+      window.speechSynthesis.onvoiceschanged = loadVoices;
+      loadVoices(); // Try to load voices immediately
+      
+      // Clean up
+      return () => {
+        window.speechSynthesis.onvoiceschanged = null;
+        window.speechSynthesis.cancel(); // Cancel any ongoing speech
+      };
+    }
+  }, []);
 
   // Speaking effect for NPC text when step changes
   useEffect(() => {
@@ -806,17 +862,24 @@ const RoleplayGame: React.FC = () => {
     );
   };
 
-  // Enhanced speak function with loading state
+  // Enhanced speak function with loading state and better error handling
   const handlePronounce = (text: string) => {
     setIsPronouncing(true);
-    // Force voices to load if they haven't yet
-    window.speechSynthesis.getVoices();
     
-    // Small delay to ensure voices are loaded
-    setTimeout(() => {
+    try {
+      // Attempt to speak and set a timeout to reset the loading state
       speak(text);
-      setTimeout(() => setIsPronouncing(false), 500);
-    }, 100);
+      
+      // Set a reasonable timeout for the pronunciation to complete
+      setTimeout(() => {
+        setIsPronouncing(false);
+      }, 3000); // 3 seconds should be enough for most phrases
+    } catch (error) {
+      console.error('Error during pronunciation:', error);
+      setSnackbarMessage('Failed to pronounce text. Please try again.');
+      setSnackbarOpen(true);
+      setIsPronouncing(false);
+    }
   };
 
   return (
