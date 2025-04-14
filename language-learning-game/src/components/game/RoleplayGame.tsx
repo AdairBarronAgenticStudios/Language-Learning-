@@ -23,6 +23,7 @@ import StopIcon from '@mui/icons-material/Stop';
 import KeyboardIcon from '@mui/icons-material/Keyboard';
 import EmojiEventsIcon from '@mui/icons-material/EmojiEvents';
 import { useGame } from '../../contexts/GameContext';
+import { playSound, pronounceSpanish } from '../../utils/spanishPronunciation';
 // Import Layout or other necessary components if needed
 // import Layout from '../Layout'; 
 
@@ -416,54 +417,18 @@ const RoleplayGame: React.FC = () => {
   const totalSteps = conversationSteps.length;
   const progressPercentage = (currentStepIndex / totalSteps) * 100;
 
-  // Create a simplified text-to-speech function that speaks the Spanish text
-  const speakSpanishText = useCallback((text: string) => {
-    // Use the Web Speech API directly
-    if (!window.speechSynthesis) {
-      console.error('Speech synthesis not supported');
-      return false;
-    }
-    
-    // Cancel any ongoing speech
-    window.speechSynthesis.cancel();
-    
-    const utterance = new SpeechSynthesisUtterance(text);
-    utterance.lang = 'es-ES';  // Spanish language
-    utterance.rate = 0.9;  // Slightly slower for better comprehension
-    
-    try {
-      window.speechSynthesis.speak(utterance);
-      return true;
-    } catch (error) {
-      console.error('Error speaking text:', error);
-      return false;
-    }
-  }, []);
-
-  // Function to play pre-recorded audio with better error handling
-  const playPronunciation = useCallback((text: string) => {
-    setIsPronouncing(true);
-    
-    try {
-      // Simply use the original text for speech synthesis (more reliable)
-      const success = speakSpanishText(text);
-      
-      if (!success) {
-        setSnackbarMessage('Unable to pronounce text. Your browser may not support speech synthesis.');
-        setSnackbarOpen(true);
-      }
-      
-      // Reset state after a delay to account for speaking time
-      setTimeout(() => {
-        setIsPronouncing(false);
-      }, 5000);
-    } catch (error) {
-      console.error('Pronunciation error:', error);
-      setSnackbarMessage('Error with pronunciation. Please try again.');
+  // Handle the pronunciation with our improved utility
+  const handlePronunciation = useCallback((text: string) => {
+    pronounceSpanish(
+      text,
+      () => setIsPronouncing(true),
+      () => setIsPronouncing(false)
+    ).catch(() => {
+      setSnackbarMessage('Failed to pronounce text. Please try again.');
       setSnackbarOpen(true);
       setIsPronouncing(false);
-    }
-  }, [setSnackbarMessage, setSnackbarOpen, speakSpanishText]);
+    });
+  }, [setIsPronouncing, setSnackbarMessage, setSnackbarOpen]);
 
   // Initialize speech recognition
   useEffect(() => {
@@ -506,36 +471,16 @@ const RoleplayGame: React.FC = () => {
     };
   }, []);
 
-  // Initialize voices when component mounts
-  useEffect(() => {
-    if (window.speechSynthesis) {
-      // Force load voices
-      const loadVoices = () => {
-        const voices = window.speechSynthesis.getVoices();
-        console.log('Initial voices loaded:', voices.length);
-      };
-      
-      window.speechSynthesis.onvoiceschanged = loadVoices;
-      loadVoices(); // Try to load voices immediately
-      
-      // Clean up
-      return () => {
-        window.speechSynthesis.onvoiceschanged = null;
-        window.speechSynthesis.cancel(); // Cancel any ongoing speech
-      };
-    }
-  }, []);
-
   // Speaking effect for NPC text when step changes
   useEffect(() => {
-    if (currentStep && currentStep.npc) {
+    if (currentStep && currentStep.npc && currentStep.type !== 'narration') {
       // Small delay to ensure component is rendered
       const timer = setTimeout(() => {
-        playPronunciation(currentStep.npc);
+        handlePronunciation(currentStep.npc);
       }, 500);
       return () => clearTimeout(timer);
     }
-  }, [currentStep, playPronunciation]);
+  }, [currentStep, handlePronunciation]);
 
   const startListening = () => {
     setIsListening(true);
@@ -1119,7 +1064,7 @@ const RoleplayGame: React.FC = () => {
                       </Typography>
                       {currentStep.type !== 'narration' && (
                         <Button
-                          onClick={() => playPronunciation(currentStep.npc)}
+                          onClick={() => handlePronunciation(currentStep.npc)}
                           disabled={isPronouncing}
                           variant="text"
                           size="small"
