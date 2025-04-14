@@ -910,7 +910,7 @@ const RoleplayGame: React.FC = () => {
             </Box>
           </Box>
 
-          {/* Scene image with overlay and fade effect */}
+          {/* Scene image with overlay and fade effect - ENLARGED */}
           {currentStep.sceneImage && (
             <Box
               sx={{
@@ -918,9 +918,10 @@ const RoleplayGame: React.FC = () => {
                 mb: 3,
                 borderRadius: 2,
                 overflow: 'hidden',
-                boxShadow: '0 4px 15px rgba(0,0,0,0.1)',
+                boxShadow: '0 6px 20px rgba(0,0,0,0.15)',
                 transition: 'all 0.3s ease-in-out',
-                transform: currentStep.type === 'narration' ? 'scale(1.05)' : 'scale(1)',
+                transform: currentStep.type === 'narration' ? 'scale(1.02)' : 'scale(1)',
+                height: '280px', // Increased height
               }}
             >
               <Box 
@@ -929,15 +930,15 @@ const RoleplayGame: React.FC = () => {
                 alt="Restaurant Scene"
                 sx={{ 
                   width: '100%', 
-                  height: '200px',
+                  height: '100%',
                   objectFit: 'cover',
                   objectPosition: 'center',
                   display: 'block',
                   borderRadius: 2,
-                  transition: 'transform 0.5s ease',
-                  filter: currentStep.type === 'narration' ? 'brightness(0.7)' : 'brightness(1)',
+                  transition: 'transform 1s ease',
+                  filter: currentStep.type === 'narration' ? 'brightness(0.8)' : 'brightness(1)',
                   '&:hover': {
-                    transform: 'scale(1.02)',
+                    transform: 'scale(1.03)',
                   }
                 }}
               />
@@ -947,36 +948,64 @@ const RoleplayGame: React.FC = () => {
                   bottom: 0,
                   left: 0,
                   right: 0,
-                  height: '80px',
+                  height: '100px', // Increased gradient height
                   background: 'linear-gradient(to top, rgba(0,0,0,0.7) 0%, rgba(0,0,0,0) 100%)',
                   borderRadius: '0 0 8px 8px',
                 }}
               />
               
-              {/* Show location name on the image */}
-              <Typography 
-                variant="body2" 
+              {/* Enhanced location label */}
+              <Box
                 sx={{
                   position: 'absolute',
-                  bottom: 10,
-                  left: 10,
-                  color: 'white',
-                  textShadow: '0 1px 3px rgba(0,0,0,0.8)',
-                  fontWeight: 'bold',
+                  bottom: 16,
+                  left: 16,
                   display: 'flex',
                   alignItems: 'center',
-                  gap: 0.5,
-                  px: 1.5,
-                  py: 0.5,
-                  borderRadius: 1,
-                  bgcolor: 'rgba(0,0,0,0.5)',
-                  backdropFilter: 'blur(4px)',
+                  gap: 1,
+                  px: 2,
+                  py: 1,
+                  borderRadius: 2,
+                  bgcolor: 'rgba(0,0,0,0.6)',
+                  backdropFilter: 'blur(8px)',
+                  boxShadow: '0 2px 8px rgba(0,0,0,0.3)',
+                  border: '1px solid rgba(255,255,255,0.1)',
                 }}
               >
-                {currentStep.type === 'narration' ? '📜' : '🗣️'} {
-                  locations.find(loc => loc.image === currentStep.sceneImage)?.name || 'Restaurant'
-                }
-              </Typography>
+                <Typography 
+                  variant="body1" 
+                  sx={{
+                    color: 'white',
+                    textShadow: '0 1px 3px rgba(0,0,0,0.8)',
+                    fontWeight: 'bold',
+                  }}
+                >
+                  {currentStep.type === 'narration' ? '📜 ' : '🗣️ '}
+                  {locations.find(loc => loc.image === currentStep.sceneImage)?.name || 'Restaurant'}
+                </Typography>
+              </Box>
+              
+              {/* Optional location description tooltip */}
+              <Tooltip 
+                title={locations.find(loc => loc.image === currentStep.sceneImage)?.description || 'Restaurant scene'} 
+                placement="top"
+              >
+                <IconButton
+                  sx={{
+                    position: 'absolute',
+                    top: 12,
+                    right: 12,
+                    bgcolor: 'rgba(255,255,255,0.3)',
+                    backdropFilter: 'blur(4px)',
+                    '&:hover': {
+                      bgcolor: 'rgba(255,255,255,0.5)',
+                    }
+                  }}
+                  size="small"
+                >
+                  <Box component="span" sx={{ fontSize: '16px' }}>ℹ️</Box>
+                </IconButton>
+              </Tooltip>
             </Box>
           )}
 
