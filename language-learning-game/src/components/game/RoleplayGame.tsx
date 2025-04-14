@@ -22,7 +22,7 @@ import MicIcon from '@mui/icons-material/Mic';
 import StopIcon from '@mui/icons-material/Stop';
 import KeyboardIcon from '@mui/icons-material/Keyboard';
 import EmojiEventsIcon from '@mui/icons-material/EmojiEvents';
-import { GameContext } from '../../contexts/GameContext';
+import GameContext, { useGame } from '../../contexts/GameContext';
 // Import Layout or other necessary components if needed
 // import Layout from '../Layout'; 
 
@@ -396,7 +396,7 @@ const RoleplayGame: React.FC = () => {
   const recognitionRef = useRef<any>(null);
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
-  const gameContext = useContext(GameContext);
+  const context = useGame();
 
   // Find current step based on ID
   const currentStep = conversationSteps.find(step => step.id === currentStepId) || conversationSteps[0];
@@ -595,7 +595,10 @@ const RoleplayGame: React.FC = () => {
           setCurrentStepId(selectedOption.nextStepId);
         } else {
           // Default linear progression (legacy behavior)
-          setCurrentStepIndex(prevIndex => prevIndex + 1);
+          setCurrentStepId(prevIndex => {
+            const nextIdx = conversationSteps.findIndex(step => step.id === prevIndex) + 1;
+            return nextIdx < conversationSteps.length ? conversationSteps[nextIdx].id : prevIndex;
+          });
         }
         
         setFeedback({ type: '', text: '' });
@@ -631,10 +634,10 @@ const RoleplayGame: React.FC = () => {
   };
 
   const handleCompleteRoleplay = async () => {
-    if (gameContext) {
+    if (context) {
       try {
         // Complete the roleplay level with the final score
-        await gameContext.completeLevel('roleplay_restaurant', score);
+        await context.completeLevel('roleplay_restaurant', score);
         // Show success message
         setSnackbarMessage('Progress saved successfully!');
         setSnackbarOpen(true);

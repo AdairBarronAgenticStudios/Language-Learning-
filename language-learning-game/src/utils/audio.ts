@@ -22,7 +22,7 @@ export const playSound = {
 };
 
 // Preload sounds
-export const preloadSounds = () => {
+export const preloadAudio = () => {
   Object.values(sounds).forEach(sound => {
     sound.load();
   });
