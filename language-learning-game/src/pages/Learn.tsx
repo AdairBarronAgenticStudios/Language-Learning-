@@ -16,12 +16,16 @@ import Layout from '../components/Layout';
 import { LessonType, LanguageLevel } from '../types';
 import FamilyVocabulary from '../components/lessons/vocabulary/FamilyVocabulary';
 import Professions from '../components/lessons/vocabulary/Professions';
+import BusinessTerms from '../components/lessons/vocabulary/BusinessTerms';
 import BasicVerbs from '../components/lessons/grammar/BasicVerbs';
 import PastTense from '../components/lessons/grammar/PastTense';
+import SubjunctiveMood from '../components/lessons/grammar/SubjunctiveMood';
 import BasicPronunciation from '../components/lessons/speaking/BasicPronunciation';
 import SentencePronunciation from '../components/lessons/speaking/SentencePronunciation';
+import RegionalAccents from '../components/lessons/speaking/RegionalAccents';
 import BasicConversations from '../components/lessons/listening/BasicConversations';
 import DailyConversations from '../components/lessons/listening/DailyConversations';
+import NewsAndMedia from '../components/lessons/listening/NewsAndMedia';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import LockIcon from '@mui/icons-material/Lock';
 import { useGame } from '../contexts/GameContext';
@@ -51,6 +55,14 @@ const vocabularyLessons: Lesson[] = [
     level: 'intermediate',
     prerequisite: 'vocabulary_1',
   },
+  {
+    id: 'vocabulary_business',
+    title: 'Business Terms',
+    description: 'Master advanced business and professional vocabulary',
+    component: BusinessTerms,
+    level: 'advanced',
+    prerequisite: 'vocabulary_professions',
+  },
 ];
 
 const grammarLessons: Lesson[] = [
@@ -68,6 +80,14 @@ const grammarLessons: Lesson[] = [
     component: PastTense,
     level: 'intermediate',
     prerequisite: 'grammar_1',
+  },
+  {
+    id: 'grammar_subjunctive',
+    title: 'Subjunctive Mood',
+    description: 'Learn to use the subjunctive mood in complex expressions',
+    component: SubjunctiveMood,
+    level: 'advanced',
+    prerequisite: 'grammar_past_tense',
   },
 ];
 
@@ -87,6 +107,14 @@ const speakingLessons: Lesson[] = [
     level: 'intermediate',
     prerequisite: 'speaking_1',
   },
+  {
+    id: 'speaking_regional',
+    title: 'Regional Accents',
+    description: 'Explore different Spanish accents and regional expressions',
+    component: RegionalAccents,
+    level: 'advanced',
+    prerequisite: 'speaking_sentences',
+  },
 ];
 
 const listeningLessons: Lesson[] = [
@@ -104,6 +132,14 @@ const listeningLessons: Lesson[] = [
     component: DailyConversations,
     level: 'intermediate',
     prerequisite: 'listening_1',
+  },
+  {
+    id: 'listening_news',
+    title: 'News and Media',
+    description: 'Practice with authentic Spanish news and media content',
+    component: NewsAndMedia,
+    level: 'advanced',
+    prerequisite: 'listening_daily',
   },
 ];
 
