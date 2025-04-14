@@ -257,112 +257,109 @@ const RoleplayGame: React.FC = () => {
   }
 
   return (
-    <Box sx={{
-        p: { xs: 2, sm: 3 }, 
-        maxWidth: 700, 
-        mx: 'auto',
-        bgcolor: '#ffffff', 
-        borderRadius: 2, 
-        boxShadow: 3,
-        my: 4,
-        position: 'relative'
-    }}>
+    <>
+      <Box sx={{
+          p: { xs: 2, sm: 3 }, 
+          maxWidth: 700, 
+          mx: 'auto',
+          bgcolor: '#ffffff', 
+          borderRadius: 2, 
+          boxShadow: 3,
+          mt: 4,
+      }}>
+          <Typography variant="h4" component="h1" gutterBottom align="center" sx={{ borderBottom: 1, borderColor: 'divider', pb: 1, mb: 2 }}>
+              Ordering at a Restaurant
+          </Typography>
+
+          {currentStep.sceneImage && (
+              <Box component="img"
+                  src={currentStep.sceneImage}
+                  alt="Restaurant Background"
+                  sx={{ width: '100%', height: 'auto', borderRadius: 1, mb: 2 }}
+              />
+          )}
+
+          {/* Conversation Area */}
+          <Box sx={{ mb: 3, p: 2, border: 1, borderColor: 'divider', borderRadius: 1, bgcolor: '#fafafa' }}>
+              {/* NPC Dialogue */}
+              <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1.5, mb: 2 }}>
+                  <Avatar src={currentStep.npcAvatar || 'https://via.placeholder.com/80?text=NPC'} sx={{ width: 50, height: 50 }} />
+                  <Box sx={{ 
+                      bgcolor: '#e9e9eb', 
+                      p: '10px 15px', 
+                      borderRadius: '15px', 
+                      borderTopLeftRadius: 0,
+                      maxWidth: '75%'
+                  }}>
+                      <Typography variant="body1">{currentStep.npc}</Typography>
+                       <IconButton onClick={() => speak(currentStep.npc)} size="small" sx={{ p: 0, ml: 1 }}>
+                          <VolumeUpIcon fontSize="inherit" />
+                      </IconButton>
+                  </Box>
+              </Box>
+
+              {/* User Interaction Area */}
+              <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 1.5, mt: 2 }}>
+                   {/* User Avatar Placeholder - aligned right */}
+                  <Avatar src={currentStep.userAvatar || 'https://via.placeholder.com/80?text=User'} sx={{ width: 50, height: 50, alignSelf: 'flex-end' }} />
+
+                  {/* Dialogue Options (Buttons) */}
+                  {renderDialogueOptions()}
+
+                  {/* Speech Input Feedback */}
+                  {inputMethod === 'speak' && isListening && (
+                       <Box sx={{ display: 'flex', alignItems: 'center', color: 'text.secondary' }}>
+                          <CircularProgress size={20} sx={{ mr: 1 }}/>
+                          <Typography>Listening...</Typography>
+                          <IconButton onClick={stopListening} color="error" size="small">
+                              <StopIcon />
+                          </IconButton>
+                      </Box>
+                  )}
+                  
+                  {/* Input Toggle Button - only if speech is supported */} 
+                  {speechApiSupported && currentStep.userOptions.length > 0 && (
+                       <Button 
+                          variant="outlined"
+                          size="small" 
+                          onClick={toggleInput} 
+                          disabled={isListening} 
+                          startIcon={inputMethod === 'tap' ? <MicIcon /> : <KeyboardIcon />}
+                          sx={{ mt: 1, borderRadius: '20px' }}
+                      >
+                          {inputMethod === 'tap' ? 'Speak' : 'Tap'}
+                      </Button>
+                  )}
+              </Box>
+          </Box>
+
+          {/* Feedback Area */}
+          <Typography 
+              sx={{
+                  mt: 2, 
+                  fontWeight: 'bold', 
+                  color: feedback.type === 'correct' ? 'success.main' : (feedback.type === 'incorrect' ? 'error.main' : 'text.secondary')
+              }}
+          >
+              {feedback.text}
+          </Typography>
+
+          {/* Progress Area */}
+          <Typography sx={{ mt: 2, color: 'text.secondary' }}>
+              Score: {score}
+          </Typography>
+
+      </Box>
+
+      <Box sx={{ textAlign: 'center', mt: 2, mb: 4 }}>
         <Button 
             variant="outlined"
             onClick={() => navigate('/')}
-            sx={{ 
-                position: 'absolute', 
-                top: 16, 
-                left: 16, 
-                zIndex: 10
-            }}
         >
              Back to Home
         </Button>
-
-        <Typography variant="h4" component="h1" gutterBottom align="center" sx={{ borderBottom: 1, borderColor: 'divider', pb: 1, mb: 2, mt: 4 }}>
-            Ordering at a Restaurant
-        </Typography>
-
-        {currentStep.sceneImage && (
-            <Box component="img"
-                src={currentStep.sceneImage}
-                alt="Restaurant Background"
-                sx={{ width: '100%', height: 'auto', borderRadius: 1, mb: 2 }}
-            />
-        )}
-
-        {/* Conversation Area */}
-        <Box sx={{ mb: 3, p: 2, border: 1, borderColor: 'divider', borderRadius: 1, bgcolor: '#fafafa' }}>
-            {/* NPC Dialogue */}
-            <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1.5, mb: 2 }}>
-                <Avatar src={currentStep.npcAvatar || 'https://via.placeholder.com/80?text=NPC'} sx={{ width: 50, height: 50 }} />
-                <Box sx={{ 
-                    bgcolor: '#e9e9eb', 
-                    p: '10px 15px', 
-                    borderRadius: '15px', 
-                    borderTopLeftRadius: 0,
-                    maxWidth: '75%'
-                }}>
-                    <Typography variant="body1">{currentStep.npc}</Typography>
-                     <IconButton onClick={() => speak(currentStep.npc)} size="small" sx={{ p: 0, ml: 1 }}>
-                        <VolumeUpIcon fontSize="inherit" />
-                    </IconButton>
-                </Box>
-            </Box>
-
-            {/* User Interaction Area */}
-            <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 1.5, mt: 2 }}>
-                 {/* User Avatar Placeholder - aligned right */}
-                <Avatar src={currentStep.userAvatar || 'https://via.placeholder.com/80?text=User'} sx={{ width: 50, height: 50, alignSelf: 'flex-end' }} />
-
-                {/* Dialogue Options (Buttons) */}
-                {renderDialogueOptions()}
-
-                {/* Speech Input Feedback */}
-                {inputMethod === 'speak' && isListening && (
-                     <Box sx={{ display: 'flex', alignItems: 'center', color: 'text.secondary' }}>
-                        <CircularProgress size={20} sx={{ mr: 1 }}/>
-                        <Typography>Listening...</Typography>
-                        <IconButton onClick={stopListening} color="error" size="small">
-                            <StopIcon />
-                        </IconButton>
-                    </Box>
-                )}
-                
-                {/* Input Toggle Button - only if speech is supported */} 
-                {speechApiSupported && currentStep.userOptions.length > 0 && (
-                     <Button 
-                        variant="outlined"
-                        size="small" 
-                        onClick={toggleInput} 
-                        disabled={isListening} 
-                        startIcon={inputMethod === 'tap' ? <MicIcon /> : <KeyboardIcon />}
-                        sx={{ mt: 1, borderRadius: '20px' }}
-                    >
-                        {inputMethod === 'tap' ? 'Speak' : 'Tap'}
-                    </Button>
-                )}
-            </Box>
-        </Box>
-
-        {/* Feedback Area */}
-        <Typography 
-            sx={{
-                mt: 2, 
-                fontWeight: 'bold', 
-                color: feedback.type === 'correct' ? 'success.main' : (feedback.type === 'incorrect' ? 'error.main' : 'text.secondary')
-            }}
-        >
-            {feedback.text}
-        </Typography>
-
-        {/* Progress Area */}
-        <Typography sx={{ mt: 2, color: 'text.secondary' }}>
-            Score: {score}
-        </Typography>
-
-    </Box>
+      </Box>
+    </>
   );
 };
 
