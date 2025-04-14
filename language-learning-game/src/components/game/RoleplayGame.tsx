@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   Box,
   Typography,
@@ -77,6 +78,7 @@ declare global {
 }
 
 const RoleplayGame: React.FC = () => {
+  const navigate = useNavigate();
   const [currentStepIndex, setCurrentStepIndex] = useState(0);
   const [score, setScore] = useState(0);
   const [feedback, setFeedback] = useState({ text: '', type: '' }); // type: 'correct' | 'incorrect'
@@ -247,7 +249,9 @@ const RoleplayGame: React.FC = () => {
         <Box sx={{p: 3, textAlign: 'center'}}>
              <Typography variant="h5">Roleplay Complete!</Typography>
              <Typography>Final Score: {score}</Typography>
-             {/* Button to go back or next */} 
+             <Button variant="contained" onClick={() => navigate('/')} sx={{ mt: 2 }}>
+                Back to Home
+             </Button>
         </Box>
      )
   }
@@ -260,9 +264,23 @@ const RoleplayGame: React.FC = () => {
         bgcolor: '#ffffff', 
         borderRadius: 2, 
         boxShadow: 3,
-        my: 4
+        my: 4,
+        position: 'relative'
     }}>
-        <Typography variant="h4" component="h1" gutterBottom align="center" sx={{ borderBottom: 1, borderColor: 'divider', pb: 1, mb: 2 }}>
+        <Button 
+            variant="outlined"
+            onClick={() => navigate('/')}
+            sx={{ 
+                position: 'absolute', 
+                top: 16, 
+                left: 16, 
+                zIndex: 10
+            }}
+        >
+             Back to Home
+        </Button>
+
+        <Typography variant="h4" component="h1" gutterBottom align="center" sx={{ borderBottom: 1, borderColor: 'divider', pb: 1, mb: 2, mt: 4 }}>
             Ordering at a Restaurant
         </Typography>
 
