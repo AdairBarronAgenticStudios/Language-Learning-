@@ -8,7 +8,8 @@ import {
   CardContent,
   Avatar,
   IconButton,
-  CircularProgress
+  CircularProgress,
+  Paper
 } from '@mui/material';
 import VolumeUpIcon from '@mui/icons-material/VolumeUp';
 import MicIcon from '@mui/icons-material/Mic';
@@ -41,8 +42,8 @@ const conversationSteps: ConversationStep[] = [
       { text: 'Buenas noches.', correct: false },
     ],
     correctResponseSpeech: 'mesa para dos por favor',
-    npcAvatar: 'https://via.placeholder.com/80?text=Waiter',
-    sceneImage: 'https://via.placeholder.com/600x200?text=Restaurant+Background'
+    npcAvatar: 'https://images.unsplash.com/photo-1566554273541-37a9ca77b91f?ixlib=rb-1.2.1&auto=format&fit=crop&w=150&q=80',
+    sceneImage: 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?ixlib=rb-1.2.1&auto=format&fit=crop&w=1000&q=80'
   },
   {
     npc: 'Perfecto. Síganme, por favor. Aquí tienen el menú.',
@@ -52,6 +53,8 @@ const conversationSteps: ConversationStep[] = [
       { text: 'El menú es grande.', correct: false },
     ],
     correctResponseSpeech: 'gracias qué recomienda',
+    npcAvatar: 'https://images.unsplash.com/photo-1566554273541-37a9ca77b91f?ixlib=rb-1.2.1&auto=format&fit=crop&w=150&q=80',
+    sceneImage: 'https://images.unsplash.com/photo-1533777857889-4be7c70b33f7?ixlib=rb-1.2.1&auto=format&fit=crop&w=1000&q=80'
   },
   {
     npc: 'Nuestra paella es muy popular hoy. ¿Quieren pedir bebidas primero?',
@@ -61,11 +64,15 @@ const conversationSteps: ConversationStep[] = [
       { text: 'No, gracias.', correct: false },
     ],
     correctResponseSpeech: 'sí dos aguas por favor',
+    npcAvatar: 'https://images.unsplash.com/photo-1566554273541-37a9ca77b91f?ixlib=rb-1.2.1&auto=format&fit=crop&w=150&q=80',
+    sceneImage: 'https://images.unsplash.com/photo-1515669097368-22e68427d265?ixlib=rb-1.2.1&auto=format&fit=crop&w=1000&q=80'
   },
   {
     npc: '¡Excelente! La conversación termina aquí por ahora.',
     userOptions: [],
     correctResponseSpeech: '',
+    npcAvatar: 'https://images.unsplash.com/photo-1566554273541-37a9ca77b91f?ixlib=rb-1.2.1&auto=format&fit=crop&w=150&q=80',
+    sceneImage: 'https://images.unsplash.com/photo-1414235077428-338989a2e8c0?ixlib=rb-1.2.1&auto=format&fit=crop&w=1000&q=80'
   }
 ];
 
@@ -244,12 +251,39 @@ const RoleplayGame: React.FC = () => {
   };
 
   if (currentStepIndex >= conversationSteps.length) {
-     // Could show a summary screen here
      return (
-        <Box sx={{p: 3, textAlign: 'center'}}>
-             <Typography variant="h5">Roleplay Complete!</Typography>
-             <Typography>Final Score: {score}</Typography>
-             <Button variant="contained" onClick={() => navigate('/')} sx={{ mt: 2 }}>
+        <Box 
+          sx={{
+            p: 4, 
+            textAlign: 'center',
+            maxWidth: 700,
+            mx: 'auto',
+            borderRadius: 2,
+            boxShadow: 3,
+            mt: 4,
+            backgroundImage: `linear-gradient(rgba(255, 255, 255, 0.9), rgba(255, 255, 255, 0.9)), url(https://images.unsplash.com/photo-1414235077428-338989a2e8c0?ixlib=rb-1.2.1&auto=format&fit=crop&w=1000&q=80)`,
+            backgroundSize: 'cover',
+            backgroundPosition: 'center',
+          }}
+        >
+             <Typography variant="h4" sx={{ color: '#2E7D32', mb: 2 }}>¡Felicidades!</Typography>
+             <Typography variant="h5" sx={{ mb: 3 }}>Roleplay Complete!</Typography>
+             <Typography variant="h6" sx={{ mb: 4 }}>Final Score: {score}</Typography>
+             <Button 
+               variant="contained" 
+               onClick={() => navigate('/')} 
+               sx={{ 
+                 mt: 2,
+                 px: 4,
+                 py: 1.5,
+                 borderRadius: '28px',
+                 background: 'linear-gradient(45deg, #5E60CE 30%, #4ECDC4 90%)',
+                 boxShadow: '0 3px 5px 2px rgba(94, 96, 206, .3)',
+                 '&:hover': {
+                   background: 'linear-gradient(45deg, #4244A0 30%, #3AAEA6 90%)',
+                 }
+               }}
+             >
                 Back to Home
              </Button>
         </Box>
@@ -258,103 +292,299 @@ const RoleplayGame: React.FC = () => {
 
   return (
     <>
-      <Box sx={{
-          p: { xs: 2, sm: 3 }, 
+      <Box 
+        sx={{
+          p: { xs: 2, sm: 4 }, 
           maxWidth: 700, 
           mx: 'auto',
           bgcolor: '#ffffff', 
           borderRadius: 2, 
-          boxShadow: 3,
+          boxShadow: '0 8px 30px rgba(0, 0, 0, 0.12)',
           mt: 4,
-      }}>
-          <Typography variant="h4" component="h1" gutterBottom align="center" sx={{ borderBottom: 1, borderColor: 'divider', pb: 1, mb: 2 }}>
+          position: 'relative',
+          overflow: 'hidden',
+        }}
+      >
+          {/* Title with gradient background */}
+          <Box 
+            sx={{ 
+              borderRadius: '12px 12px 0 0',
+              mb: 3,
+              pb: 2,
+              textAlign: 'center',
+              position: 'relative',
+              borderBottom: '1px solid rgba(0,0,0,0.1)',
+            }}
+          >
+            <Typography 
+              variant="h4" 
+              component="h1" 
+              gutterBottom 
+              sx={{ 
+                fontWeight: 700,
+                color: '#333',
+                textShadow: '0 1px 2px rgba(0,0,0,0.1)',
+              }}
+            >
               Ordering at a Restaurant
-          </Typography>
+            </Typography>
+          </Box>
 
+          {/* Scene image with overlay and fade effect */}
           {currentStep.sceneImage && (
-              <Box component="img"
-                  src={currentStep.sceneImage}
-                  alt="Restaurant Background"
-                  sx={{ width: '100%', height: 'auto', borderRadius: 1, mb: 2 }}
+            <Box
+              sx={{
+                position: 'relative',
+                mb: 3,
+                borderRadius: 2,
+                overflow: 'hidden',
+                boxShadow: '0 4px 15px rgba(0,0,0,0.1)',
+              }}
+            >
+              <Box 
+                component="img"
+                src={currentStep.sceneImage}
+                alt="Restaurant Scene"
+                sx={{ 
+                  width: '100%', 
+                  height: '200px',
+                  objectFit: 'cover',
+                  objectPosition: 'center',
+                  display: 'block',
+                  borderRadius: 2,
+                  transition: 'transform 0.3s ease',
+                  '&:hover': {
+                    transform: 'scale(1.02)',
+                  }
+                }}
               />
+              <Box
+                sx={{
+                  position: 'absolute',
+                  bottom: 0,
+                  left: 0,
+                  right: 0,
+                  height: '80px',
+                  background: 'linear-gradient(to top, rgba(0,0,0,0.7) 0%, rgba(0,0,0,0) 100%)',
+                  borderRadius: '0 0 8px 8px',
+                }}
+              />
+            </Box>
           )}
 
-          {/* Conversation Area */}
-          <Box sx={{ mb: 3, p: 2, border: 1, borderColor: 'divider', borderRadius: 1, bgcolor: '#fafafa' }}>
-              {/* NPC Dialogue */}
-              <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1.5, mb: 2 }}>
-                  <Avatar src={currentStep.npcAvatar || 'https://via.placeholder.com/80?text=NPC'} sx={{ width: 50, height: 50 }} />
+          {/* Conversation Area - enhanced with paper effect and better shadows */}
+          <Paper 
+            elevation={3}
+            sx={{ 
+              mb: 3, 
+              p: 3, 
+              borderRadius: 2, 
+              bgcolor: '#F8F9FA',
+              position: 'relative'
+            }}
+          >
+              {/* NPC Dialogue - enhanced with better avatars and speech bubbles */}
+              <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 2, mb: 3 }}>
+                  <Avatar 
+                    src={currentStep.npcAvatar || 'https://images.unsplash.com/photo-1566554273541-37a9ca77b91f?ixlib=rb-1.2.1&auto=format&fit=crop&w=150&q=80'} 
+                    sx={{ 
+                      width: 56, 
+                      height: 56,
+                      border: '2px solid #fff',
+                      boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
+                    }} 
+                  />
                   <Box sx={{ 
                       bgcolor: '#e9e9eb', 
-                      p: '10px 15px', 
-                      borderRadius: '15px', 
+                      p: '12px 18px', 
+                      borderRadius: '18px', 
                       borderTopLeftRadius: 0,
-                      maxWidth: '75%'
+                      maxWidth: '75%',
+                      boxShadow: '0 1px 2px rgba(0,0,0,0.1)',
+                      position: 'relative',
                   }}>
-                      <Typography variant="body1">{currentStep.npc}</Typography>
-                       <IconButton onClick={() => speak(currentStep.npc)} size="small" sx={{ p: 0, ml: 1 }}>
-                          <VolumeUpIcon fontSize="inherit" />
+                      <Typography 
+                        variant="body1" 
+                        sx={{ 
+                          fontWeight: 500,
+                          lineHeight: 1.5,
+                        }}
+                      >
+                        {currentStep.npc}
+                      </Typography>
+                      <IconButton 
+                        onClick={() => speak(currentStep.npc)} 
+                        size="small" 
+                        sx={{ 
+                          p: 1, 
+                          ml: 1,
+                          bgcolor: 'rgba(0,0,0,0.05)',
+                          '&:hover': {
+                            bgcolor: 'rgba(0,0,0,0.1)',
+                          }
+                        }}
+                      >
+                          <VolumeUpIcon fontSize="small" />
                       </IconButton>
                   </Box>
               </Box>
 
-              {/* User Interaction Area */}
-              <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 1.5, mt: 2 }}>
-                   {/* User Avatar Placeholder - aligned right */}
-                  <Avatar src={currentStep.userAvatar || 'https://via.placeholder.com/80?text=User'} sx={{ width: 50, height: 50, alignSelf: 'flex-end' }} />
+              {/* User Interaction Area - with enhanced visuals */}
+              <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 2, mt: 3 }}>
+                   {/* User Avatar - enhanced with better styling */}
+                  <Avatar 
+                    src={currentStep.userAvatar || 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?ixlib=rb-1.2.1&auto=format&fit=crop&w=150&q=80'} 
+                    sx={{ 
+                      width: 56, 
+                      height: 56, 
+                      alignSelf: 'flex-end',
+                      border: '2px solid #fff',
+                      boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
+                    }} 
+                  />
 
-                  {/* Dialogue Options (Buttons) */}
-                  {renderDialogueOptions()}
+                  {/* Dialogue Options - with enhanced button styling */}
+                  {inputMethod === 'tap' && currentStep.userOptions.length > 0 && (
+                    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5, alignItems: 'flex-end', width: '100%' }}>
+                        {currentStep.userOptions.map((option, index) => (
+                            <Button
+                                key={index}
+                                variant="contained"
+                                onClick={() => handleUserResponse(option.correct, option.text)}
+                                sx={{ 
+                                  borderRadius: '24px', 
+                                  textTransform: 'none', 
+                                  maxWidth: '85%',
+                                  py: 1.2,
+                                  px: 2.5,
+                                  bgcolor: '#5E60CE',
+                                  boxShadow: '0 3px 8px rgba(94, 96, 206, 0.3)',
+                                  '&:hover': {
+                                    bgcolor: '#4244A0',
+                                    transform: 'translateY(-2px)',
+                                    boxShadow: '0 5px 12px rgba(94, 96, 206, 0.4)',
+                                  },
+                                  transition: 'all 0.2s ease',
+                                }}
+                            >
+                                {option.text}
+                            </Button>
+                        ))}
+                    </Box>
+                  )}
 
-                  {/* Speech Input Feedback */}
+                  {/* Speech Input Feedback - with enhanced styling */}
                   {inputMethod === 'speak' && isListening && (
-                       <Box sx={{ display: 'flex', alignItems: 'center', color: 'text.secondary' }}>
-                          <CircularProgress size={20} sx={{ mr: 1 }}/>
-                          <Typography>Listening...</Typography>
-                          <IconButton onClick={stopListening} color="error" size="small">
+                       <Box sx={{ 
+                         display: 'flex', 
+                         alignItems: 'center', 
+                         color: 'text.secondary',
+                         bgcolor: 'rgba(0,0,0,0.05)',
+                         px: 2,
+                         py: 1,
+                         borderRadius: 4,
+                         boxShadow: '0 2px 6px rgba(0,0,0,0.1)',
+                       }}>
+                          <CircularProgress size={24} sx={{ mr: 2, color: '#5E60CE' }}/>
+                          <Typography sx={{ fontWeight: 500 }}>Listening...</Typography>
+                          <IconButton onClick={stopListening} color="error" size="small" sx={{ ml: 1 }}>
                               <StopIcon />
                           </IconButton>
                       </Box>
                   )}
                   
-                  {/* Input Toggle Button - only if speech is supported */} 
+                  {/* Input Toggle Button - with enhanced styling */} 
                   {speechApiSupported && currentStep.userOptions.length > 0 && (
                        <Button 
                           variant="outlined"
-                          size="small" 
+                          size="medium" 
                           onClick={toggleInput} 
                           disabled={isListening} 
                           startIcon={inputMethod === 'tap' ? <MicIcon /> : <KeyboardIcon />}
-                          sx={{ mt: 1, borderRadius: '20px' }}
+                          sx={{ 
+                            mt: 1.5, 
+                            borderRadius: '24px',
+                            borderWidth: 2,
+                            px: 2.5,
+                            py: 1,
+                            borderColor: '#5E60CE',
+                            color: '#5E60CE',
+                            '&:hover': {
+                              borderWidth: 2,
+                              bgcolor: 'rgba(94, 96, 206, 0.05)',
+                              transform: 'translateY(-2px)',
+                            },
+                            transition: 'all 0.2s ease',
+                          }}
                       >
                           {inputMethod === 'tap' ? 'Speak' : 'Tap'}
                       </Button>
                   )}
               </Box>
-          </Box>
+          </Paper>
 
-          {/* Feedback Area */}
+          {/* Feedback Area - with enhanced styling */}
           <Typography 
               sx={{
-                  mt: 2, 
+                  mt: 2.5, 
+                  mb: 1.5,
                   fontWeight: 'bold', 
-                  color: feedback.type === 'correct' ? 'success.main' : (feedback.type === 'incorrect' ? 'error.main' : 'text.secondary')
+                  textAlign: 'center',
+                  fontSize: '1.1rem',
+                  color: feedback.type === 'correct' ? 'success.main' : (feedback.type === 'incorrect' ? 'error.main' : 'text.secondary'),
+                  textShadow: feedback.type === 'correct' ? '0 1px 4px rgba(6, 214, 160, 0.2)' : (feedback.type === 'incorrect' ? '0 1px 4px rgba(239, 71, 111, 0.2)' : 'none'),
               }}
           >
               {feedback.text}
           </Typography>
 
-          {/* Progress Area */}
-          <Typography sx={{ mt: 2, color: 'text.secondary' }}>
-              Score: {score}
-          </Typography>
+          {/* Progress Area - with enhanced styling */}
+          <Box 
+            sx={{ 
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              mt: 3,
+              py: 1.5,
+              borderTop: '1px solid rgba(0,0,0,0.1)',
+            }}
+          >
+            <Typography 
+              sx={{ 
+                color: '#5E60CE',
+                fontWeight: 700,
+                fontSize: '1.1rem',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+            >
+              Score: <Box component="span" sx={{ ml: 1, fontSize: '1.3rem' }}>{score}</Box>
+            </Typography>
+          </Box>
 
       </Box>
 
-      <Box sx={{ textAlign: 'center', mt: 2, mb: 4 }}>
+      {/* Back button - enhanced with better styling */}
+      <Box sx={{ textAlign: 'center', mt: 3, mb: 5 }}>
         <Button 
             variant="outlined"
             onClick={() => navigate('/')}
+            sx={{
+              borderRadius: '24px',
+              borderWidth: 2,
+              px: 4,
+              py: 1.2,
+              borderColor: '#5E60CE',
+              color: '#5E60CE',
+              fontSize: '1rem',
+              '&:hover': {
+                borderWidth: 2,
+                bgcolor: 'rgba(94, 96, 206, 0.05)',
+                transform: 'translateY(-2px)',
+              },
+              transition: 'all 0.2s ease',
+            }}
         >
              Back to Home
         </Button>
