@@ -124,24 +124,22 @@ const FamilyVocabulary: React.FC = () => {
   };
 
   const handleComplete = useCallback(() => {
+    setLessonComplete(true);
     if (context) {
-      // Ensure the level is completed and next level is unlocked before navigating
       Promise.resolve(context.completeLevel('vocabulary_1', 100))
         .then(() => {
           console.log('Family vocabulary lesson completed successfully');
-          // Navigate back to the vocabulary menu
-          window.location.href = '/learn';
         })
         .catch((error: Error) => {
           console.error('Error completing family vocabulary lesson:', error);
-          // Still navigate even if there's an error
-          window.location.href = '/learn';
         });
-    } else {
-      // If no context, just navigate
-      window.location.href = '/learn';
     }
   }, [context]);
+
+  const handleContinueLearning = () => {
+    setLessonComplete(false);
+    window.location.href = '/learn';
+  };
 
   const pronounceWord = (text: string) => {
     if (isPlaying) return; // Prevent multiple simultaneous pronunciations
@@ -304,7 +302,7 @@ const FamilyVocabulary: React.FC = () => {
         </Box>
       </Box>
 
-      <Dialog open={lessonComplete} onClose={handleComplete}>
+      <Dialog open={lessonComplete} onClose={() => {}}>
         <DialogTitle>¡Felicitaciones!</DialogTitle>
         <DialogContent>
           <Typography>
@@ -312,7 +310,7 @@ const FamilyVocabulary: React.FC = () => {
           </Typography>
         </DialogContent>
         <DialogActions>
-          <Button onClick={handleComplete} variant="contained">
+          <Button onClick={handleContinueLearning} color="primary" variant="contained">
             Continue Learning
           </Button>
         </DialogActions>
