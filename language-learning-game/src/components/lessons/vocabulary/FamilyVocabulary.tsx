@@ -11,7 +11,10 @@ import {
   DialogTitle,
   DialogContent,
   DialogActions,
+  IconButton,
+  Tooltip,
 } from '@mui/material';
+import VolumeUpIcon from '@mui/icons-material/VolumeUp';
 import { useGame } from '../../../contexts/GameContext';
 
 interface VocabularyWord {
@@ -69,6 +72,7 @@ const FamilyVocabulary: React.FC = () => {
   const [showExample, setShowExample] = useState(false);
   const [showTranslation, setShowTranslation] = useState(false);
   const [lessonComplete, setLessonComplete] = useState(false);
+  const [isPlaying, setIsPlaying] = useState(false);
 
   const progress = ((currentIndex + 1) / familyVocabulary.length) * 100;
 
@@ -96,6 +100,26 @@ const FamilyVocabulary: React.FC = () => {
   const handleComplete = () => {
     // Navigate back to the vocabulary menu
     window.location.href = '/learn';
+  };
+
+  const pronounceWord = (text: string) => {
+    if (isPlaying) return; // Prevent multiple simultaneous pronunciations
+
+    setIsPlaying(true);
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.lang = 'es-ES'; // Set language to Spanish
+    utterance.rate = 0.8; // Slightly slower rate for better clarity
+
+    utterance.onend = () => {
+      setIsPlaying(false);
+    };
+
+    utterance.onerror = () => {
+      console.error('Error playing pronunciation');
+      setIsPlaying(false);
+    };
+
+    window.speechSynthesis.speak(utterance);
   };
 
   const currentWord = familyVocabulary[currentIndex];
@@ -130,9 +154,32 @@ const FamilyVocabulary: React.FC = () => {
           onClick={() => setShowTranslation(!showTranslation)}
         >
           <CardContent>
-            <Typography variant="h3" component="div" gutterBottom align="center">
-              {currentWord.spanish}
-            </Typography>
+            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 2 }}>
+              <Typography variant="h3" component="div" gutterBottom align="center">
+                {currentWord.spanish}
+              </Typography>
+              <Tooltip title="Listen to pronunciation">
+                <IconButton 
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    pronounceWord(currentWord.spanish);
+                  }}
+                  disabled={isPlaying}
+                  color="primary"
+                  sx={{ 
+                    ml: 2,
+                    animation: isPlaying ? 'pulse 1s infinite' : 'none',
+                    '@keyframes pulse': {
+                      '0%': { transform: 'scale(1)' },
+                      '50%': { transform: 'scale(1.1)' },
+                      '100%': { transform: 'scale(1)' },
+                    },
+                  }}
+                >
+                  <VolumeUpIcon />
+                </IconButton>
+              </Tooltip>
+            </Box>
             
             {showTranslation && (
               <Typography variant="h4" color="text.secondary" align="center">
@@ -152,13 +199,28 @@ const FamilyVocabulary: React.FC = () => {
             </Button>
             
             {showExample && (
-              <Typography 
-                variant="body1" 
-                sx={{ mt: 2, fontStyle: 'italic' }}
-                align="center"
-              >
-                {currentWord.example}
-              </Typography>
+              <Box sx={{ mt: 2 }}>
+                <Typography 
+                  variant="body1" 
+                  sx={{ fontStyle: 'italic' }}
+                  align="center"
+                >
+                  {currentWord.example}
+                </Typography>
+                <Tooltip title="Listen to example">
+                  <IconButton 
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      pronounceWord(currentWord.example);
+                    }}
+                    disabled={isPlaying}
+                    color="primary"
+                    sx={{ mt: 1 }}
+                  >
+                    <VolumeUpIcon />
+                  </IconButton>
+                </Tooltip>
+              </Box>
             )}
           </CardContent>
         </Card>
