@@ -380,6 +380,17 @@ declare global {
   }
 }
 
+// Add pre-recorded pronunciation URL mapping
+const pronunciationAudio: { [key: string]: string } = {
+  '¡Hola! Bienvenidos a "La Mesa Española". ¿Mesa para cuántos?': 'https://firebasestorage.googleapis.com/v0/b/language-learning-app-2024.appspot.com/o/audio%2Fgreeting.mp3?alt=media',
+  'Mesa para dos, por favor.': 'https://firebasestorage.googleapis.com/v0/b/language-learning-app-2024.appspot.com/o/audio%2Fmesa_para_dos.mp3?alt=media',
+  'El camarero les lleva a una mesa cerca de la ventana. "Perfecto. Síganme, por favor. Aquí tienen el menú."': 'https://firebasestorage.googleapis.com/v0/b/language-learning-app-2024.appspot.com/o/audio%2Fseating.mp3?alt=media',
+  'Gracias. ¿Qué recomienda?': 'https://firebasestorage.googleapis.com/v0/b/language-learning-app-2024.appspot.com/o/audio%2Fgracias_recomienda.mp3?alt=media',
+  'Nuestra paella es muy popular hoy. ¿Quieren pedir bebidas primero?': 'https://firebasestorage.googleapis.com/v0/b/language-learning-app-2024.appspot.com/o/audio%2Frecommendations.mp3?alt=media',
+  'Sí, dos aguas, por favor.': 'https://firebasestorage.googleapis.com/v0/b/language-learning-app-2024.appspot.com/o/audio%2Faguas_por_favor.mp3?alt=media',
+  '¡Perfecto! Dos aguas. ¿Están listos para ordenar o necesitan más tiempo?': 'https://firebasestorage.googleapis.com/v0/b/language-learning-app-2024.appspot.com/o/audio%2Fdrinks_ordered.mp3?alt=media'
+};
+
 const RoleplayGame: React.FC = () => {
   const navigate = useNavigate();
   const [currentStepId, setCurrentStepId] = useState('greeting');
@@ -446,62 +457,67 @@ const RoleplayGame: React.FC = () => {
     };
   }, []);
 
-  // Function to speak text using speech synthesis
-  const speak = useCallback((text: string) => {
-    if (!window.speechSynthesis) {
-      console.error('Speech synthesis not supported');
-      setSnackbarMessage('Speech synthesis not supported in your browser');
-      setSnackbarOpen(true);
-      return;
-    }
+  // Function to play pre-recorded audio
+  const playPronunciation = useCallback((text: string) => {
+    // First check if we have a pre-recorded audio file for this text
+    const audioUrl = pronunciationAudio[text];
     
-    // Cancel any ongoing speech
-    window.speechSynthesis.cancel();
-    
-    const utterance = new SpeechSynthesisUtterance(text);
-    utterance.lang = 'es-ES';
-    utterance.rate = 0.9; // Slightly slower for language learning
-    utterance.pitch = 1.1; // Slightly higher pitch for better clarity
-    utterance.volume = 1.0; // Maximum volume
-    
-    // Get Spanish voice if available
-    let voices = window.speechSynthesis.getVoices();
-    console.log('Available voices:', voices.map(v => `${v.name} (${v.lang})`).join(', '));
-    
-    // If voices array is empty, force voices to load and try again
-    if (voices.length === 0) {
-      window.speechSynthesis.onvoiceschanged = () => {
-        voices = window.speechSynthesis.getVoices();
-        console.log('Voices loaded after change:', voices.map(v => `${v.name} (${v.lang})`).join(', '));
-        const spanishVoice = voices.find(voice => voice.lang.includes('es'));
-        console.log('Selected Spanish voice:', spanishVoice?.name);
-        
-        if (spanishVoice) {
-          utterance.voice = spanishVoice;
-        }
-        
-        console.log('Speaking text:', text);
-        window.speechSynthesis.speak(utterance);
+    if (audioUrl) {
+      // Play the pre-recorded audio
+      const audio = new Audio(audioUrl);
+      audio.onerror = (e) => {
+        console.error('Audio playback error:', e);
+        setSnackbarMessage('Error playing pronunciation. Please try again.');
+        setSnackbarOpen(true);
+        setIsPronouncing(false);
       };
-      
-      // Trigger onvoiceschanged
-      window.speechSynthesis.getVoices();
+      audio.onended = () => {
+        setIsPronouncing(false);
+      };
+      audio.play().catch(error => {
+        console.error('Failed to play audio:', error);
+        setSnackbarMessage('Failed to play pronunciation. Please try again.');
+        setSnackbarOpen(true);
+        setIsPronouncing(false);
+      });
     } else {
+      // Fallback to speech synthesis if no pre-recorded audio exists
+      if (!window.speechSynthesis) {
+        console.error('Speech synthesis not supported');
+        setSnackbarMessage('Speech synthesis not supported in your browser');
+        setSnackbarOpen(true);
+        setIsPronouncing(false);
+        return;
+      }
+      
+      // Cancel any ongoing speech
+      window.speechSynthesis.cancel();
+      
+      const utterance = new SpeechSynthesisUtterance(text);
+      utterance.lang = 'es-ES';
+      utterance.rate = 0.9; // Slightly slower for language learning
+      utterance.pitch = 1.1; // Slightly higher pitch for better clarity
+      utterance.volume = 1.0; // Maximum volume
+      
+      const voices = window.speechSynthesis.getVoices();
       const spanishVoice = voices.find(voice => voice.lang.includes('es'));
-      console.log('Selected Spanish voice:', spanishVoice?.name);
       
       if (spanishVoice) {
         utterance.voice = spanishVoice;
       }
       
-      console.log('Speaking text:', text);
+      utterance.onend = () => {
+        setIsPronouncing(false);
+      };
+      
+      utterance.onerror = () => {
+        setIsPronouncing(false);
+        setSnackbarMessage('Failed to speak text. Please try again.');
+        setSnackbarOpen(true);
+      };
+      
       window.speechSynthesis.speak(utterance);
     }
-    
-    // Add event listeners for debugging
-    utterance.onstart = () => console.log('Speech started');
-    utterance.onend = () => console.log('Speech ended');
-    utterance.onerror = (event) => console.error('Speech error:', event);
   }, [setSnackbarMessage, setSnackbarOpen]);
 
   // Initialize voices when component mounts
@@ -529,11 +545,11 @@ const RoleplayGame: React.FC = () => {
     if (currentStep && currentStep.npc) {
       // Small delay to ensure component is rendered
       const timer = setTimeout(() => {
-        speak(currentStep.npc);
+        playPronunciation(currentStep.npc);
       }, 500);
       return () => clearTimeout(timer);
     }
-  }, [currentStep, speak]);
+  }, [currentStep, playPronunciation]);
 
   const startListening = () => {
     setIsListening(true);
@@ -642,11 +658,6 @@ const RoleplayGame: React.FC = () => {
         type: 'correct', 
         text: selectedOption?.feedback || '¡Correcto! Muy bien.' 
       });
-      
-      // Speak the correct response if available
-      if (currentStep.correctResponseSpeech) {
-        speak(currentStep.correctResponseSpeech);
-      }
       
       // Show progress animation before moving to next step
       setShowProgressBar(true);
@@ -867,13 +878,13 @@ const RoleplayGame: React.FC = () => {
     setIsPronouncing(true);
     
     try {
-      // Attempt to speak and set a timeout to reset the loading state
-      speak(text);
+      // Use the playPronunciation function instead of speak
+      playPronunciation(text);
       
-      // Set a reasonable timeout for the pronunciation to complete
+      // Set a timeout just in case the audio events don't fire
       setTimeout(() => {
         setIsPronouncing(false);
-      }, 3000); // 3 seconds should be enough for most phrases
+      }, 10000); // 10 seconds maximum
     } catch (error) {
       console.error('Error during pronunciation:', error);
       setSnackbarMessage('Failed to pronounce text. Please try again.');
