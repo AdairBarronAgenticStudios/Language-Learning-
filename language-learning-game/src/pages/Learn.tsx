@@ -15,9 +15,13 @@ import {
 import Layout from '../components/Layout';
 import { LessonType, LanguageLevel } from '../types';
 import FamilyVocabulary from '../components/lessons/vocabulary/FamilyVocabulary';
+import Professions from '../components/lessons/vocabulary/Professions';
 import BasicVerbs from '../components/lessons/grammar/BasicVerbs';
+import PastTense from '../components/lessons/grammar/PastTense';
 import BasicPronunciation from '../components/lessons/speaking/BasicPronunciation';
+import SentencePronunciation from '../components/lessons/speaking/SentencePronunciation';
 import BasicConversations from '../components/lessons/listening/BasicConversations';
+import DailyConversations from '../components/lessons/listening/DailyConversations';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import LockIcon from '@mui/icons-material/Lock';
 import { useGame } from '../contexts/GameContext';
@@ -39,7 +43,14 @@ const vocabularyLessons: Lesson[] = [
     component: FamilyVocabulary,
     level: 'beginner',
   },
-  // More lessons will be added here
+  {
+    id: 'vocabulary_professions',
+    title: 'Professions',
+    description: 'Learn vocabulary related to different jobs and careers',
+    component: Professions,
+    level: 'intermediate',
+    prerequisite: 'vocabulary_1',
+  },
 ];
 
 const grammarLessons: Lesson[] = [
@@ -50,7 +61,14 @@ const grammarLessons: Lesson[] = [
     component: BasicVerbs,
     level: 'beginner',
   },
-  // More lessons will be added here
+  {
+    id: 'grammar_past_tense',
+    title: 'Past Tense',
+    description: 'Master the Spanish past tense (Pretérito)',
+    component: PastTense,
+    level: 'intermediate',
+    prerequisite: 'grammar_1',
+  },
 ];
 
 const speakingLessons: Lesson[] = [
@@ -61,7 +79,14 @@ const speakingLessons: Lesson[] = [
     component: BasicPronunciation,
     level: 'beginner',
   },
-  // More lessons will be added here
+  {
+    id: 'speaking_sentences',
+    title: 'Sentence Pronunciation',
+    description: 'Practice pronouncing complete Spanish sentences',
+    component: SentencePronunciation,
+    level: 'intermediate',
+    prerequisite: 'speaking_1',
+  },
 ];
 
 const listeningLessons: Lesson[] = [
@@ -72,7 +97,14 @@ const listeningLessons: Lesson[] = [
     component: BasicConversations,
     level: 'beginner',
   },
-  // More lessons will be added here
+  {
+    id: 'listening_daily',
+    title: 'Daily Conversations',
+    description: 'Listen and respond to everyday Spanish conversations',
+    component: DailyConversations,
+    level: 'intermediate',
+    prerequisite: 'listening_1',
+  },
 ];
 
 const lessonTypes: { type: LessonType; label: string; description: string }[] = [
