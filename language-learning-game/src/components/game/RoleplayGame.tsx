@@ -397,6 +397,7 @@ const RoleplayGame: React.FC = () => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const context = useGame();
+  const [isPronouncing, setIsPronouncing] = useState(false);
 
   // Find current step based on ID
   const currentStep = conversationSteps.find(step => step.id === currentStepId) || conversationSteps[0];
@@ -447,7 +448,11 @@ const RoleplayGame: React.FC = () => {
 
   // Function to speak text using speech synthesis
   const speak = useCallback((text: string) => {
-    if (!window.speechSynthesis) return;
+    if (!window.speechSynthesis) {
+      setSnackbarMessage('Speech synthesis not supported in your browser');
+      setSnackbarOpen(true);
+      return;
+    }
     
     const utterance = new SpeechSynthesisUtterance(text);
     utterance.lang = 'es-ES';
@@ -461,7 +466,7 @@ const RoleplayGame: React.FC = () => {
     }
     
     window.speechSynthesis.speak(utterance);
-  }, []);
+  }, [setSnackbarMessage, setSnackbarOpen]);
 
   // Speaking effect for NPC text when step changes
   useEffect(() => {
@@ -801,6 +806,19 @@ const RoleplayGame: React.FC = () => {
     );
   };
 
+  // Enhanced speak function with loading state
+  const handlePronounce = (text: string) => {
+    setIsPronouncing(true);
+    // Force voices to load if they haven't yet
+    window.speechSynthesis.getVoices();
+    
+    // Small delay to ensure voices are loaded
+    setTimeout(() => {
+      speak(text);
+      setTimeout(() => setIsPronouncing(false), 500);
+    }, 100);
+  };
+
   return (
     <>
       <Box 
@@ -1060,23 +1078,25 @@ const RoleplayGame: React.FC = () => {
                         {currentStep.npc}
                       </Typography>
                       {currentStep.type !== 'narration' && (
-                        <Tooltip title="Listen to pronunciation">
-                          <IconButton 
-                            onClick={() => speak(currentStep.npc)} 
-                            size="small" 
-                            sx={{ 
-                              p: 1, 
-                              ml: 1,
-                              bgcolor: 'rgba(0,0,0,0.05)',
-                              '&:hover': {
-                                bgcolor: 'rgba(0,0,0,0.1)',
-                              }
-                            }}
-                            aria-label="Listen to pronunciation"
-                          >
-                              <VolumeUpIcon fontSize="small" />
-                          </IconButton>
-                        </Tooltip>
+                        <Button
+                          onClick={() => handlePronounce(currentStep.npc)}
+                          disabled={isPronouncing}
+                          variant="text"
+                          size="small"
+                          startIcon={isPronouncing ? <CircularProgress size={16} /> : <VolumeUpIcon fontSize="small" />}
+                          sx={{
+                            mt: 1,
+                            borderRadius: '16px',
+                            color: '#5E60CE',
+                            bgcolor: 'rgba(94, 96, 206, 0.08)',
+                            '&:hover': {
+                              bgcolor: 'rgba(94, 96, 206, 0.15)',
+                            },
+                            textTransform: 'none',
+                          }}
+                        >
+                          Listen to pronunciation
+                        </Button>
                       )}
                   </Box>
               </Box>
