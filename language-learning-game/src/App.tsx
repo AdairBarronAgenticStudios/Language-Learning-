@@ -8,6 +8,7 @@ import Practice from './pages/Practice';
 import Login from './pages/Login';
 import Signup from './pages/Signup';
 import GameHub from './pages/GameHub';
+import RoleplayGame from './components/game/RoleplayGame';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { GameProvider } from './contexts/GameContext';
 
@@ -251,10 +252,10 @@ function App() {
                 }
               />
               <Route
-                path="/game"
+                path="/roleplay/restaurant"
                 element={
                   <ProtectedRoute>
-                    <GameHub />
+                    <RoleplayGame />
                   </ProtectedRoute>
                 }
               />
