@@ -4,8 +4,6 @@ import {
   Box,
   Typography,
   Button,
-  Card,
-  CardContent,
   Avatar,
   IconButton,
   CircularProgress,
@@ -13,9 +11,7 @@ import {
   LinearProgress,
   Snackbar,
   Alert,
-  Tooltip,
-  useMediaQuery,
-  useTheme
+  Tooltip
 } from '@mui/material';
 import VolumeUpIcon from '@mui/icons-material/VolumeUp';
 import MicIcon from '@mui/icons-material/Mic';
@@ -34,6 +30,7 @@ interface UserOption {
   feedback?: string;
   nextStepId?: string; // Add path branching for RPG-style choices
   rewardPoints?: number; // Different options can give different rewards
+  correctResponseSpeech?: string; // Add this optional property
 }
 
 interface Character {
@@ -382,113 +379,268 @@ declare global {
 }
 
 // Replace the Firebase URLs with local paths
-const pronunciationAudio: { [key: string]: string } = {
-  '¡Hola! Bienvenidos a "La Mesa Española". ¿Mesa para cuántos?': '/sounds/greeting.mp3',
-  'Mesa para dos, por favor.': '/sounds/mesa_para_dos.mp3',
-  'El camarero les lleva a una mesa cerca de la ventana. "Perfecto. Síganme, por favor. Aquí tienen el menú."': '/sounds/seating.mp3',
-  'Gracias. ¿Qué recomienda?': '/sounds/gracias_recomienda.mp3',
-  'Nuestra paella es muy popular hoy. ¿Quieren pedir bebidas primero?': '/sounds/recommendations.mp3',
-  'Sí, dos aguas, por favor.': '/sounds/aguas_por_favor.mp3',
-  '¡Perfecto! Dos aguas. ¿Están listos para ordenar o necesitan más tiempo?': '/sounds/drinks_ordered.mp3'
-};
+// Commented out as it's unused
+// const pronunciationAudio: { [key: string]: string } = {
+//   '¡Hola! Bienvenidos a "La Mesa Española". ¿Mesa para cuántos?': '/sounds/greeting.mp3',
+//   'Mesa para dos, por favor.': '/sounds/mesa_para_dos.mp3',
+//   'El camarero les lleva a una mesa cerca de la ventana. "Perfecto. Síganme, por favor. Aquí tienen el menú."': '/sounds/seating.mp3',
+//   'Gracias. ¿Qué recomienda?': '/sounds/gracias_recomienda.mp3',
+//   'Nuestra paella es muy popular hoy. ¿Quieren pedir bebidas primero?': '/sounds/recommendations.mp3',
+//   'Sí, dos aguas, por favor.': '/sounds/aguas_por_favor.mp3',
+//   '¡Perfecto! Dos aguas. ¿Están listos para ordenar o necesitan más tiempo?': '/sounds/drinks_ordered.mp3'
+// };
 
 const RoleplayGame: React.FC = () => {
   const navigate = useNavigate();
-  const [currentStepId, setCurrentStepId] = useState('greeting');
+  const context = useGame();
+  const [currentStepId, setCurrentStepId] = useState<string>('greeting');
   const [score, setScore] = useState(0);
   const [feedback, setFeedback] = useState({ type: '', text: '' });
   const [inputMethod, setInputMethod] = useState<'tap' | 'speak'>('tap');
   const [isListening, setIsListening] = useState(false);
-  const [transcript, setTranscript] = useState('');
-  const [speechApiSupported, setSpeechApiSupported] = useState(false);
-  const [showHint, setShowHint] = useState(false);
+  const [showInput, setShowInput] = useState(false);
   const [snackbarOpen, setSnackbarOpen] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState('');
+  const [isPronouncing, setIsPronouncing] = useState(false);
   const [showProgressBar, setShowProgressBar] = useState(false);
   const recognitionRef = useRef<any>(null);
-  const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
-  const context = useGame();
-  const [isPronouncing, setIsPronouncing] = useState(false);
+  const isMounted = useRef(true);
 
-  // Find current step based on ID
   const currentStep = conversationSteps.find(step => step.id === currentStepId) || conversationSteps[0];
-  const currentStepIndex = conversationSteps.findIndex(step => step.id === currentStepId);
+  const currentStepIndex = conversationSteps.length - 1;
   const totalSteps = conversationSteps.length;
   const progressPercentage = (currentStepIndex / totalSteps) * 100;
 
-  // Handle the pronunciation with our improved utility
-  const handlePronunciation = useCallback((text: string) => {
-    pronounceSpanish(
-      text,
-      () => setIsPronouncing(true),
-      () => setIsPronouncing(false)
-    ).catch(() => {
-      setSnackbarMessage('Failed to pronounce text. Please try again.');
-      setSnackbarOpen(true);
-      setIsPronouncing(false);
-    });
-  }, [setIsPronouncing, setSnackbarMessage, setSnackbarOpen]);
+  // Commented out as these are unused
+  // const currentCharacter = characters.find(c => c.role === 'Waiter');
+  // const playerCharacter = characters.find(c => c.id === 'player');
 
-  // Initialize speech recognition
-  useEffect(() => {
-    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-    if (SpeechRecognition) {
-      setSpeechApiSupported(true);
-      recognitionRef.current = new SpeechRecognition();
-      recognitionRef.current.continuous = false;
-      recognitionRef.current.interimResults = false;
-      recognitionRef.current.lang = 'es-ES';  // Spanish language
+  // --- Function Definitions --- 
 
-      recognitionRef.current.onresult = (event: any) => {
-        const current = event.resultIndex;
-        const transcript = event.results[current][0].transcript;
-        setTranscript(transcript);
-        handleSpeechResult(transcript);
-      };
+  // Needs to be defined early as it's used by handleSpeechResult
+  const calculateStringSimilarity = useCallback((str1: string, str2: string): number => {
+    const len1 = str1.length;
+    const len2 = str2.length;
+    if (len1 === 0) return len2 === 0 ? 1 : 0;
+    if (len2 === 0) return 0;
 
-      recognitionRef.current.onerror = (event: any) => {
-        if (event.error === 'no-speech') {
-          setSnackbarMessage('No speech detected. Please try again.');
-          setSnackbarOpen(true);
-        } else {
-          console.error('Speech recognition error', event.error);
-          setSnackbarMessage(`Error: ${event.error}. Please try tapping instead.`);
-          setSnackbarOpen(true);
+    const matrix = Array(len1 + 1).fill(null).map(() => Array(len2 + 1).fill(null));
+
+    for (let i = 0; i <= len1; i++) matrix[i][0] = i;
+    for (let j = 0; j <= len2; j++) matrix[0][j] = j;
+
+    for (let i = 1; i <= len1; i++) {
+        for (let j = 1; j <= len2; j++) {
+            const cost = str1[i - 1] === str2[j - 1] ? 0 : 1;
+            matrix[i][j] = Math.min(
+                matrix[i - 1][j] + 1,
+                matrix[i][j - 1] + 1,
+                matrix[i - 1][j - 1] + cost
+            );
         }
-        setIsListening(false);
-      };
-
-      recognitionRef.current.onend = () => {
-        setIsListening(false);
-      };
     }
 
+    const distance = matrix[len1][len2];
+    return 1 - (distance / Math.max(len1, len2));
+  }, []);
+
+  // handleCompleteRoleplay needed by handleUserResponse
+  const handleCompleteRoleplay = useCallback(async () => {
+    if (!isMounted.current) return;
+    setFeedback({ type: 'success', text: 'Roleplay completed! Well done!' });
+    if (context) {
+       context.updateScore(score);
+       context.completeLevel('roleplay-restaurant', score);
+    } else {
+      console.warn('GameContext not available to save progress.');
+    }
+    playSound.levelComplete();
+    setTimeout(() => {
+      if (isMounted.current) {
+         navigate('/');
+      }
+    }, 3000);
+  }, [navigate, score, context, isMounted]);
+
+  // handleUserResponse needed by handleSpeechResult
+  const handleUserResponse = useCallback((correct: boolean, text: string, matchAccuracy?: number) => {
+    if (!isMounted.current) return;
+    const selectedOption = currentStep?.userOptions.find(option => option.text === text);
+
+    if (correct) {
+      playSound.correct();
+      setFeedback({ type: 'success', text: selectedOption?.feedback || 'Correct!' });
+      if (selectedOption?.rewardPoints && context) {
+        context.updateScore(selectedOption.rewardPoints);
+        setScore(prev => prev + (selectedOption?.rewardPoints || 0));
+      }
+      setShowProgressBar(true);
+      const nextStepTimer = setTimeout(() => {
+        if (!isMounted.current) return;
+        const nextId = selectedOption?.nextStepId;
+        if (nextId) {
+            setCurrentStepId(nextId);
+        } else {
+            const currentIndex = conversationSteps.findIndex(step => step.id === currentStepId);
+            if (currentIndex !== -1 && currentIndex < conversationSteps.length - 1) {
+                setCurrentStepId(conversationSteps[currentIndex + 1].id);
+            } else {
+                handleCompleteRoleplay();
+            }
+        }
+        setFeedback({ type: '', text: '' });
+        setShowInput(false);
+        setShowProgressBar(false);
+      }, 1500);
+      return () => clearTimeout(nextStepTimer);
+
+    } else {
+        playSound.incorrect();
+        setFeedback({ type: 'error', text: selectedOption?.feedback || 'Incorrect. Try again.' });
+        setShowInput(true);
+    }
+  }, [isMounted, currentStep, setCurrentStepId, setFeedback, setScore, context, setShowInput, setShowProgressBar, handleCompleteRoleplay, currentStepId]);
+
+  // handleSpeechResult needed by speech recognition useEffect
+  const handleSpeechResult = useCallback((transcript: string) => {
+    if (!isMounted.current) return;
+    console.log('Speech recognized:', transcript);
+
+    let bestMatch: UserOption | null = null;
+    let highestSimilarity = 0;
+
+    if (currentStep) {
+        currentStep.userOptions.forEach(option => {
+            const targetSpeech = option.correctResponseSpeech || option.text;
+            const similarity = calculateStringSimilarity(transcript.toLowerCase(), targetSpeech.toLowerCase());
+            console.log(`Comparing "${transcript}" with "${targetSpeech}" -> Similarity: ${similarity}`);
+            if (similarity > highestSimilarity) {
+                highestSimilarity = similarity;
+                bestMatch = option;
+            }
+        });
+    }
+
+    const similarityThreshold = 0.7;
+    if (bestMatch && highestSimilarity >= similarityThreshold) {
+        const confirmedMatch = bestMatch as UserOption;
+        console.log('Match found:', confirmedMatch.text, 'Accuracy:', highestSimilarity);
+        handleUserResponse(confirmedMatch.correct, confirmedMatch.text, highestSimilarity);
+    } else {
+        console.log('No close match found. Highest similarity:', highestSimilarity);
+        setFeedback({ type: 'error', text: "I didn't understand clearly. Please try speaking again or tap an option." });
+    }
+  }, [currentStep, isMounted, setFeedback, handleUserResponse, calculateStringSimilarity]);
+
+  // handlePronunciation needed by auto-pronunciation useEffect
+  const handlePronunciation = useCallback((text: string) => {
+    if (!isMounted.current) return;
+    pronounceSpanish(
+      text,
+      () => { if (isMounted.current) setIsPronouncing(true); },
+      () => { if (isMounted.current) setIsPronouncing(false); }
+    ).catch(() => {
+      if (isMounted.current) {
+        setSnackbarMessage('Failed to pronounce text. Please try again.');
+        setSnackbarOpen(true);
+        setIsPronouncing(false);
+      }
+    });
+  }, [setSnackbarMessage, setSnackbarOpen, setIsPronouncing]);
+
+  // --- useEffect Hooks ---
+
+  useEffect(() => { // Mount/Unmount cleanup
+    isMounted.current = true;
     return () => {
+      isMounted.current = false;
       if (recognitionRef.current) {
-        recognitionRef.current.abort();
+        recognitionRef.current.stop();
+      }
+      if (window.speechSynthesis && window.speechSynthesis.speaking) {
+        window.speechSynthesis.cancel();
       }
     };
   }, []);
 
-  // Speaking effect for NPC text when step changes
-  useEffect(() => {
-    if (currentStep && currentStep.npc && currentStep.type !== 'narration') {
-      // Small delay to ensure component is rendered
+  useEffect(() => { // Speech recognition setup
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SpeechRecognition) {
+      setSnackbarMessage('Speech recognition is not supported in this browser.');
+      setSnackbarOpen(true);
+      return;
+    }
+
+    recognitionRef.current = new SpeechRecognition();
+    const recognition = recognitionRef.current;
+    recognition.lang = 'es-ES';
+    recognition.interimResults = false;
+    recognition.maxAlternatives = 1;
+
+    recognition.onresult = (event: any) => {
+      const transcript = event.results[0][0].transcript;
+      if (isMounted.current) {
+        handleSpeechResult(transcript);
+      }
+    };
+
+    recognition.onerror = (event: any) => {
+       if (isMounted.current) {
+          console.error('Speech recognition error:', event.error);
+          setSnackbarMessage(`Speech recognition error: ${event.error}`);
+          setSnackbarOpen(true);
+          setIsListening(false);
+       }
+    };
+
+    recognition.onend = () => {
+      if (isMounted.current) {
+        setIsListening(false);
+      }
+    };
+
+    return () => {
+      if (recognitionRef.current) {
+          recognitionRef.current.abort();
+      }
+    };
+  }, [handleSpeechResult, setSnackbarMessage, setSnackbarOpen, setIsListening]);
+
+  useEffect(() => { // Auto-pronunciation on step change
+    if (currentStep && currentStep.npc && isMounted.current) {
       const timer = setTimeout(() => {
-        handlePronunciation(currentStep.npc);
-      }, 500);
+        if (isMounted.current) {
+           handlePronunciation(currentStep.npc);
+        }
+      }, 150);
+
       return () => clearTimeout(timer);
     }
+
+    // Optional: Clean up synthesis if the step changes before speech finishes
+    return () => {
+      if (window.speechSynthesis && window.speechSynthesis.speaking) {
+        window.speechSynthesis.cancel();
+      }
+    };
   }, [currentStep, handlePronunciation]);
 
+  // This function is used by the mic button component
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const startListening = () => {
+    if (!recognitionRef.current) {
+      console.error("Speech recognition not initialized.");
+      setSnackbarMessage("Speech recognition setup failed. Please refresh.");
+      setSnackbarOpen(true);
+      return;
+    }
     setIsListening(true);
-    setTranscript('');
     try {
       recognitionRef.current.start();
     } catch (error) {
-      console.error("Recognition error:", error);
+      console.error("Error starting speech recognition:", error);
+      setSnackbarMessage("Could not start listening. Please try again.");
+      setSnackbarOpen(true);
       setIsListening(false);
     }
   };
@@ -501,163 +653,29 @@ const RoleplayGame: React.FC = () => {
   };
 
   const toggleInput = () => {
-    if (inputMethod === 'tap') {
-      setInputMethod('speak');
-      startListening();
-    } else {
-      setInputMethod('tap');
-      stopListening();
-    }
-  };
-
-  const handleSpeechResult = (transcript: string) => {
-    const lowerTranscript = transcript.toLowerCase().trim();
-    
-    // Find the closest match among options
-    let bestMatch: UserOption | null = null;
-    let highestSimilarity = 0;
-    
-    for (const option of currentStep.userOptions) {
-      const similarity = calculateStringSimilarity(lowerTranscript, option.text.toLowerCase());
-      if (similarity > highestSimilarity && similarity > 0.6) { // Threshold of 60% similarity
-        highestSimilarity = similarity;
-        bestMatch = option;
-      }
-    }
-    
-    if (bestMatch) {
-      handleUserResponse(bestMatch.correct, bestMatch.text, highestSimilarity);
-    } else {
-      setFeedback({ 
-        type: 'incorrect', 
-        text: "I didn't understand. Please try again or select an option." 
-      });
-      setShowHint(true);
-    }
-  };
-
-  // Simple string similarity calculation (Levenshtein distance based)
-  const calculateStringSimilarity = (str1: string, str2: string): number => {
-    const len1 = str1.length;
-    const len2 = str2.length;
-    
-    // If either string is empty, return 0
-    if (len1 === 0 || len2 === 0) return 0;
-    
-    // Normalize the strings (remove accents, etc.)
-    const normalizedStr1 = str1.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-    const normalizedStr2 = str2.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-    
-    // Check if one string contains the other
-    if (normalizedStr1.includes(normalizedStr2) || normalizedStr2.includes(normalizedStr1)) {
-      return 0.8; // High similarity if one is substring of the other
-    }
-    
-    // Simple word matching (check if key words match)
-    const words1 = normalizedStr1.split(/\s+/);
-    const words2 = normalizedStr2.split(/\s+/);
-    
-    let matchingWords = 0;
-    for (const word1 of words1) {
-      if (word1.length > 2) { // Only consider words with more than 2 characters
-        for (const word2 of words2) {
-          if (word2.length > 2 && word1 === word2) {
-            matchingWords++;
-            break;
-          }
-        }
-      }
-    }
-    
-    // Calculate similarity based on matching words
-    const totalUniqueWords = new Set([...words1, ...words2]).size;
-    return matchingWords / totalUniqueWords;
-  };
-
-  const handleUserResponse = (correct: boolean, text: string, matchAccuracy?: number) => {
-    // Find the selected option to get potential custom feedback
-    const selectedOption = currentStep.userOptions.find(option => option.text === text);
-    
-    if (correct) {
-      // Calculate score based on speech recognition accuracy if applicable
-      const pointsEarned = selectedOption?.rewardPoints || 
-                          (matchAccuracy ? Math.round(10 * matchAccuracy) : 10);
-      
-      setScore(prevScore => prevScore + pointsEarned);
-      
-      setFeedback({ 
-        type: 'correct', 
-        text: selectedOption?.feedback || '¡Correcto! Muy bien.' 
-      });
-      
-      // Show progress animation before moving to next step
-      setShowProgressBar(true);
-      setTimeout(() => {
-        // Follow the conversation path if specified, otherwise go to next step
-        if (selectedOption?.nextStepId) {
-          setCurrentStepId(selectedOption.nextStepId);
-        } else {
-          // Default linear progression (legacy behavior)
-          setCurrentStepId(prevIndex => {
-            const nextIdx = conversationSteps.findIndex(step => step.id === prevIndex) + 1;
-            return nextIdx < conversationSteps.length ? conversationSteps[nextIdx].id : prevIndex;
-          });
-        }
-        
-        setFeedback({ type: '', text: '' });
-        setShowHint(false);
-        setShowProgressBar(false);
-      }, 1500);
-    } else {
-      setFeedback({ 
-        type: 'incorrect', 
-        text: selectedOption?.feedback || 'Incorrect. Try again.' 
-      });
-      setShowHint(true);
-    }
-    
-    // Reset speech recognition if active
+    setInputMethod(prev => prev === 'speak' ? 'tap' : 'speak');
     if (isListening) {
       stopListening();
-      if (inputMethod === 'speak') {
-        // Restart listening after a short delay
-        setTimeout(() => {
-          startListening();
-        }, 1500);
-      }
     }
   };
 
   const handleHintRequest = () => {
-    const correctOption = currentStep.userOptions.find(option => option.correct);
+    if (!currentStep || !currentStep.correctResponseSpeech) return;
+    const correctOption = currentStep.userOptions.find(option => 
+        option.correct || 
+        option.text === currentStep.correctResponseSpeech || 
+        option.correctResponseSpeech === currentStep.correctResponseSpeech
+    );
+
     if (correctOption) {
-      setSnackbarMessage(`Hint: ${correctOption.text}`);
-      setSnackbarOpen(true);
+        setSnackbarMessage(`Hint: Try saying something like "${correctOption.text}"`);
+    } else {
+        setSnackbarMessage(`Hint: Check the options carefully.`); 
     }
+    setSnackbarOpen(true);
   };
 
-  const handleCompleteRoleplay = async () => {
-    if (context) {
-      try {
-        // Complete the roleplay level with the final score
-        await context.completeLevel('roleplay_restaurant', score);
-        // Show success message
-        setSnackbarMessage('Progress saved successfully!');
-        setSnackbarOpen(true);
-      } catch (error) {
-        console.error('Error saving progress:', error);
-      }
-    }
-    // Navigate back to home after a short delay
-    setTimeout(() => {
-      navigate('/');
-    }, 1500);
-  };
-
-  // Check if we've reached the end of the conversation
-  const isGameComplete = currentStep.userOptions.length === 0 || currentStep.id === 'completion';
-  
-  if (isGameComplete) {
+  if (currentStep.userOptions.length === 0 || currentStep.id === 'completion') {
      return (
         <Box 
           sx={{
@@ -728,7 +746,6 @@ const RoleplayGame: React.FC = () => {
      )
   }
 
-  // Move the +10 display to only show after a correct answer selection
   const renderUserOptions = () => {
     return (
       <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, my: 2 }}>
@@ -762,18 +779,23 @@ const RoleplayGame: React.FC = () => {
     );
   };
 
-  // Add the +10 indicator to the feedback for correct answers
   const renderFeedback = () => {
     if (!feedback.text) return null;
     
+    // Determine colors explicitly
+    const isCorrect = feedback.type === 'success';
+    const bgColor = isCorrect ? '#e8f5e9' : '#ffebee'; // Light green for correct, light red for incorrect
+    const borderColor = isCorrect ? '#4CAF50' : '#f44336'; // Green for correct, red for incorrect
+    const textColor = isCorrect ? '#2e7d32' : '#c62828'; // Darker green/red text
+
     return (
       <Box 
         sx={{ 
           my: 2, 
           p: 2, 
           borderRadius: 2, 
-          bgcolor: feedback.type === 'correct' ? 'rgba(76, 175, 80, 0.1)' : 'rgba(244, 67, 54, 0.1)',
-          border: `1px solid ${feedback.type === 'correct' ? '#4CAF50' : '#F44336'}`,
+          bgcolor: bgColor, // Use explicit background color
+          border: `1px solid ${borderColor}`, // Use explicit border color
           animation: 'fadeIn 0.5s ease-in-out',
           '@keyframes fadeIn': {
             '0%': { opacity: 0, transform: 'translateY(10px)' },
@@ -781,25 +803,24 @@ const RoleplayGame: React.FC = () => {
           },
         }}
       >
-        {feedback.type === 'correct' && (
-          <Typography 
-            variant="subtitle1" 
-            sx={{ 
-              display: 'flex', 
-              alignItems: 'center', 
-              color: '#4CAF50', 
-              fontWeight: 'bold',
-              mb: 1
-            }}
-          >
-            <span style={{ marginRight: '8px' }}>+10</span> {feedback.text}
-          </Typography>
-        )}
-        {feedback.type === 'incorrect' && (
-          <Typography variant="subtitle1" sx={{ color: '#F44336' }}>
-            {feedback.text}
-          </Typography>
-        )}
+        <Typography 
+          variant="subtitle1" 
+          sx={{ 
+            display: 'flex', 
+            alignItems: 'center', 
+            color: textColor, // Use explicit text color
+            fontWeight: 'bold',
+          }}
+        >
+          {/* Optionally add icon based on correctness */} 
+          {isCorrect ? 
+            <EmojiEventsIcon sx={{ fontSize: 20, mr: 1, color: '#FFD700'}} /> :
+            <span style={{ width: 20, height: 20, marginRight: '8px' }}></span> // Placeholder space if no icon for incorrect
+          }
+          {/* Show +10 only if correct? Removed for now to simplify */} 
+          {/* {isCorrect && <span style={{ marginRight: '8px' }}>+10</span>} */} 
+          {feedback.text}
+        </Typography>
       </Box>
     );
   };
@@ -824,7 +845,6 @@ const RoleplayGame: React.FC = () => {
           transition: 'all 0.5s ease-in-out',
         }}
       >
-          {/* RPG-style player stats bar */}
           <Box sx={{
             position: 'absolute',
             top: 5,
@@ -846,7 +866,6 @@ const RoleplayGame: React.FC = () => {
             </Box>
           </Box>
           
-          {/* Progress bar showing conversation progress */}
           <LinearProgress 
             variant="determinate" 
             value={progressPercentage} 
@@ -864,7 +883,6 @@ const RoleplayGame: React.FC = () => {
             }} 
           />
           
-          {/* Scene title with location information */}
           <Box 
             sx={{ 
               borderRadius: '12px 12px 0 0',
@@ -913,7 +931,6 @@ const RoleplayGame: React.FC = () => {
             </Box>
           </Box>
 
-          {/* Scene image with overlay and fade effect - ENLARGED */}
           {currentStep.sceneImage && (
             <Box
               sx={{
@@ -924,7 +941,7 @@ const RoleplayGame: React.FC = () => {
                 boxShadow: '0 6px 20px rgba(0,0,0,0.15)',
                 transition: 'all 0.3s ease-in-out',
                 transform: currentStep.type === 'narration' ? 'scale(1.02)' : 'scale(1)',
-                height: '280px', // Increased height
+                height: '280px',
               }}
             >
               <Box 
@@ -951,13 +968,12 @@ const RoleplayGame: React.FC = () => {
                   bottom: 0,
                   left: 0,
                   right: 0,
-                  height: '100px', // Increased gradient height
+                  height: '100px',
                   background: 'linear-gradient(to top, rgba(0,0,0,0.7) 0%, rgba(0,0,0,0) 100%)',
                   borderRadius: '0 0 8px 8px',
                 }}
               />
               
-              {/* Enhanced location label */}
               <Box
                 sx={{
                   position: 'absolute',
@@ -988,7 +1004,6 @@ const RoleplayGame: React.FC = () => {
                 </Typography>
               </Box>
               
-              {/* Optional location description tooltip */}
               <Tooltip 
                 title={locations.find(loc => loc.image === currentStep.sceneImage)?.description || 'Restaurant scene'} 
                 placement="top"
@@ -1012,7 +1027,6 @@ const RoleplayGame: React.FC = () => {
             </Box>
           )}
 
-          {/* Conversation Area - enhanced with paper effect and better shadows */}
           <Paper 
             elevation={3}
             sx={{ 
@@ -1029,7 +1043,6 @@ const RoleplayGame: React.FC = () => {
               border: currentStep.type === 'narration' ? '1px solid rgba(139, 69, 19, 0.2)' : 'none',
             }}
           >
-              {/* NPC Dialogue - enhanced with better avatars and speech bubbles */}
               <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 2, mb: 3 }}>
                   <Avatar 
                     src={currentStep.npcAvatar || characters.find(c => c.id === 'waiter')?.avatar} 
@@ -1086,10 +1099,8 @@ const RoleplayGame: React.FC = () => {
                   </Box>
               </Box>
 
-              {/* User Interaction Area - with enhanced visuals */}
               <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 2, mt: 3 }}>
-                   {/* User Avatar - enhanced with better styling */}
-                  <Avatar 
+                   <Avatar 
                     src={currentStep.userAvatar || characters.find(c => c.id === 'player')?.avatar} 
                     sx={{ 
                       width: 56, 
@@ -1101,12 +1112,10 @@ const RoleplayGame: React.FC = () => {
                     }} 
                   />
 
-                  {/* Dialogue Options - with enhanced button styling */}
                   {inputMethod === 'tap' && currentStep.userOptions.length > 0 && (
                     renderUserOptions()
                   )}
 
-                  {/* Speech Input Feedback - with enhanced styling */}
                   {inputMethod === 'speak' && isListening && (
                        <Box sx={{ 
                          display: 'flex', 
@@ -1126,8 +1135,7 @@ const RoleplayGame: React.FC = () => {
                       </Box>
                   )}
                   
-                  {/* Input Method Toggle Button */}
-                  {speechApiSupported && currentStep.userOptions.length > 0 && (
+                  {inputMethod === 'tap' && currentStep.userOptions.length > 0 && (
                        <Button 
                           variant="outlined" 
                           size="medium" 
@@ -1156,11 +1164,9 @@ const RoleplayGame: React.FC = () => {
               </Box>
           </Paper>
 
-          {/* Feedback Area - with enhanced styling */}
           {renderFeedback()}
 
-          {/* Hint button - appears after incorrect answers */}
-          {showHint && (
+          {showInput && (
             <Box sx={{ textAlign: 'center', mb: 2 }}>
               <Button 
                 variant="text" 
@@ -1179,7 +1185,6 @@ const RoleplayGame: React.FC = () => {
             </Box>
           )}
 
-          {/* XP Progress Bar */}
           <Box 
             sx={{ 
               display: 'flex',
@@ -1210,7 +1215,6 @@ const RoleplayGame: React.FC = () => {
 
       </Box>
 
-      {/* Back button - enhanced with better styling */}
       <Box sx={{ textAlign: 'center', mt: 3, mb: 5 }}>
         <Button 
             variant="outlined"
@@ -1235,7 +1239,6 @@ const RoleplayGame: React.FC = () => {
         </Button>
       </Box>
       
-      {/* Snackbar for hints and notifications */}
       <Snackbar
         open={snackbarOpen}
         autoHideDuration={6000}
