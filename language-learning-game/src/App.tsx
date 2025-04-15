@@ -10,6 +10,7 @@ import Signup from './pages/Signup';
 import GameHub from './pages/GameHub';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { GameProvider } from './contexts/GameContext';
+import RoleplayGame from './components/game/RoleplayGame';
 
 // Create a theme instance
 const theme = createTheme({
@@ -229,28 +230,31 @@ function App() {
               <Route
                 path="/"
                 element={
-                  <ProtectedRoute>
+                  // <ProtectedRoute>
                     <Home />
-                  </ProtectedRoute>
+                  // </ProtectedRoute>
                 }
               />
               <Route
                 path="/learn"
                 element={
-                  <ProtectedRoute>
+                  // <ProtectedRoute>
                     <Learn />
-                  </ProtectedRoute>
+                  // </ProtectedRoute>
                 }
               />
               <Route
                 path="/practice"
                 element={
-                  <ProtectedRoute>
+                  // <ProtectedRoute>
                     <Practice />
-                  </ProtectedRoute>
+                  // </ProtectedRoute>
                 }
               />
-              <Route path="*" element={<Navigate to="/" replace />} />
+              {/* Allow access to game hub and specific games without login for testing */}
+              <Route path="/game" element={<GameHub />} />
+              <Route path="/roleplay/restaurant" element={<RoleplayGame />} />
+              {/* Add other protected routes here if needed */}
             </Routes>
           </Router>
         </GameProvider>

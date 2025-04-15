@@ -92,6 +92,11 @@ const Login: React.FC = () => {
                   Sign Up
                 </Link>
               </Typography>
+              <Typography variant="body2" sx={{ mt: 1 }}> 
+                <Link component={RouterLink} to="/forgot-password">
+                  Forgot Password?
+                </Link>
+              </Typography>
             </Box>
           </Paper>
         </Box>
