@@ -39,23 +39,60 @@ export const playSound = {
 export const speakSpanish = (text: string): Promise<boolean> => {
   return new Promise((resolve) => {
     try {
-      // Try browser speech synthesis first
-      if (window.speechSynthesis) {
-        const utterance = new SpeechSynthesisUtterance(text);
-        utterance.lang = 'es-ES';
-        utterance.rate = 0.9;
-        utterance.volume = 1.0;
-        
-        // Event handlers
-        utterance.onend = () => resolve(true);
-        utterance.onerror = () => resolve(false);
-        
-        // Cancel any ongoing speech and start new one
-        window.speechSynthesis.cancel();
-        window.speechSynthesis.speak(utterance);
-      } else {
+      if (!window.speechSynthesis) {
+        console.error('Speech synthesis not supported');
         resolve(false);
+        return;
       }
+
+      // Force stop any ongoing speech
+      window.speechSynthesis.cancel();
+
+      const utterance = new SpeechSynthesisUtterance(text);
+      utterance.lang = 'es-ES';
+      utterance.rate = 0.7;
+      utterance.pitch = 1.0;
+      utterance.volume = 1.0;
+
+      // Initialize voices synchronously first
+      const voices = speechSynthesis.getVoices();
+      const spanishVoice = voices.find(voice => voice.lang.startsWith('es'));
+      
+      if (spanishVoice) {
+        utterance.voice = spanishVoice;
+        console.log('Using Spanish voice:', spanishVoice.name);
+      } else {
+        console.log('No Spanish voice found, using default voice');
+      }
+
+      // Set up event handlers
+      utterance.onend = () => {
+        console.log('Speech completed successfully');
+        resolve(true);
+      };
+
+      utterance.onerror = (event) => {
+        console.error('Speech synthesis error:', event);
+        resolve(false);
+      };
+
+      // Ensure the speech synthesis is in a clean state
+      if (speechSynthesis.speaking) {
+        speechSynthesis.cancel();
+      }
+
+      // Add the utterance to the queue and start speaking
+      speechSynthesis.speak(utterance);
+
+      // Workaround for Chrome bug where speech can get stuck
+      const timeoutMs = text.length * 100;
+      setTimeout(() => {
+        if (speechSynthesis.speaking) {
+          speechSynthesis.pause();
+          speechSynthesis.resume();
+        }
+      }, timeoutMs);
+
     } catch (error) {
       console.error('Speech synthesis error:', error);
       resolve(false);
