@@ -236,14 +236,14 @@ const conversationSteps: ConversationStep[] = [
         text: 'Sí, por favor. Suena bien.', 
         correct: true,
         feedback: 'Good choice! Rioja is a famous Spanish wine region.',
-        nextStepId: 'food-order',
+        nextStepId: 'food-ordered',
         rewardPoints: 10
       },
       { 
         text: 'No, prefiero un vino blanco.', 
         correct: true,
         feedback: 'Expressing your preference is good practice!',
-        nextStepId: 'white-wine',
+        nextStepId: 'food-ordered',
         rewardPoints: 10
       }
     ],
