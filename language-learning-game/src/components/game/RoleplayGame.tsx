@@ -11,7 +11,8 @@ import {
   LinearProgress,
   Snackbar,
   Alert,
-  Tooltip
+  Tooltip,
+  Modal
 } from '@mui/material';
 import VolumeUpIcon from '@mui/icons-material/VolumeUp';
 import MicIcon from '@mui/icons-material/Mic';
@@ -20,6 +21,7 @@ import KeyboardIcon from '@mui/icons-material/Keyboard';
 import EmojiEventsIcon from '@mui/icons-material/EmojiEvents';
 import { useGame } from '../../contexts/GameContext';
 import { playSound, pronounceSpanish } from '../../utils/spanishPronunciation';
+import { getSpanishDefinition, DictionaryEntry, DictionaryError } from '../../utils/dictionaryApi';
 // Import Layout or other necessary components if needed
 // import Layout from '../Layout'; 
 
@@ -390,6 +392,23 @@ declare global {
 //   '¡Perfecto! Dos aguas. ¿Están listos para ordenar o necesitan más tiempo?': '/sounds/drinks_ordered.mp3'
 // };
 
+// --- Style for Modal --- Added Section
+const modalStyle = {
+  position: 'absolute' as 'absolute',
+  top: '50%',
+  left: '50%',
+  transform: 'translate(-50%, -50%)',
+  width: { xs: '90%', sm: 400, md: 500 }, // Responsive width
+  bgcolor: 'background.paper',
+  border: '1px solid #ccc',
+  boxShadow: 24,
+  p: 4,
+  borderRadius: 2,
+  maxHeight: '80vh', // Prevent modal from being too tall
+  overflowY: 'auto' // Allow scrolling if content overflows
+};
+// --- End Style for Modal ---
+
 const RoleplayGame: React.FC = () => {
   const navigate = useNavigate();
   const context = useGame();
@@ -403,6 +422,14 @@ const RoleplayGame: React.FC = () => {
   const [snackbarMessage, setSnackbarMessage] = useState('');
   const [isPronouncing, setIsPronouncing] = useState(false);
   const [showProgressBar, setShowProgressBar] = useState(false);
+
+  // --- State for Dictionary --- Added Section
+  const [selectedWord, setSelectedWord] = useState<string | null>(null);
+  const [definitionResult, setDefinitionResult] = useState<DictionaryEntry[] | DictionaryError | null>(null);
+  const [isFetchingDefinition, setIsFetchingDefinition] = useState(false);
+  const [showDefinitionModal, setShowDefinitionModal] = useState(false);
+  // --- End State for Dictionary ---
+
   const recognitionRef = useRef<any>(null);
   const isMounted = useRef(true);
 
@@ -548,6 +575,34 @@ const RoleplayGame: React.FC = () => {
     });
   }, [setSnackbarMessage, setSnackbarOpen, setIsPronouncing]);
 
+  // --- Dictionary Word Click Handler --- Added Function
+  const handleWordClick = useCallback(async (word: string) => {
+    // Clean the word (remove punctuation, convert to lowercase)
+    const cleanedWord = word.toLowerCase().replace(/[.,!¿?¡;:]/g, '');
+    // console.log('[DEBUG] Clicked Segment:', word); // <-- REMOVE Log 1
+    // console.log('[DEBUG] Cleaned Word:', cleanedWord); // <-- REMOVE Log 2
+
+    if (!cleanedWord || cleanedWord.length <= 2) {
+      // console.log('[DEBUG] Ignoring short/empty word'); // <-- REMOVE Log 3
+      return; 
+    }
+
+    // console.log(`[DEBUG] Fetching definition for: "${cleanedWord}"`); // <-- REMOVE Log 4
+    setSelectedWord(cleanedWord);
+    setIsFetchingDefinition(true);
+    setShowDefinitionModal(true); // Open modal immediately, show loading state inside
+    setDefinitionResult(null); // Clear previous result
+
+    const result = await getSpanishDefinition(cleanedWord);
+    // console.log('[DEBUG] API Result:', result); // <-- REMOVE Log 5
+
+    if (isMounted.current) { // Check if component is still mounted before updating state
+        setDefinitionResult(result);
+        setIsFetchingDefinition(false);
+    }
+  }, [isMounted]); // Dependencies: isMounted
+  // --- End Dictionary Word Click Handler ---
+
   // --- useEffect Hooks ---
 
   useEffect(() => { // Mount/Unmount cleanup
@@ -675,6 +730,37 @@ const RoleplayGame: React.FC = () => {
     setSnackbarOpen(true);
   };
 
+  // --- Helper to render clickable words --- Added Function
+  const renderClickableText = (text: string) => {
+    if (!text) return null;
+    // Split by space, but keep the space for rendering
+    return text.split(/(\s+)/).map((segment, index) => {
+      // If it's whitespace, just return it
+      if (/^\s+$/.test(segment)) {
+        return <span key={index}>{segment}</span>;
+      }
+      // If it's a word, make it clickable
+      // We use a simple regex split for words, might need refinement for complex cases
+      return (
+        <span 
+          key={index} 
+          onClick={() => handleWordClick(segment)} 
+          style={{ cursor: 'pointer', /* Add hover effect maybe? */ }}
+        >
+          {segment}
+        </span>
+      );
+    });
+  };
+  // --- End Helper to render clickable words ---
+
+  const handleCloseModal = () => { // Added function to close modal
+    setShowDefinitionModal(false);
+    // Optionally clear state when closing
+    // setSelectedWord(null);
+    // setDefinitionResult(null);
+  };
+
   if (currentStep.userOptions.length === 0 || currentStep.id === 'completion') {
      return (
         <Box 
@@ -753,7 +839,8 @@ const RoleplayGame: React.FC = () => {
           <Button
             key={index}
             variant="contained"
-            onClick={() => handleUserResponse(option.correct, option.text)}
+            // Replace direct text rendering with clickable text
+            // onClick={() => handleUserResponse(option.correct, option.text)} 
             sx={{
               bgcolor: '#6C63FF',
               borderRadius: '50px',
@@ -772,7 +859,9 @@ const RoleplayGame: React.FC = () => {
               },
             }}
           >
-            {option.text}
+            {/* Use helper function for clickable words inside button */}
+            {renderClickableText(option.text)}
+            {/* Add an invisible overlay or adjust padding if clicks inside button are tricky */}
           </Button>
         ))}
       </Box>
@@ -1067,13 +1156,15 @@ const RoleplayGame: React.FC = () => {
                   }}>
                       <Typography 
                         variant="body1" 
+                        component="div" // Change component to div to allow span children
                         sx={{ 
                           fontWeight: currentStep.type === 'narration' ? 400 : 500,
                           lineHeight: 1.6,
                           color: currentStep.type === 'narration' ? 'text.secondary' : 'text.primary',
                         }}
                       >
-                        {currentStep.npc}
+                        {/* Use helper function for clickable NPC text */}
+                        {renderClickableText(currentStep.npc)}
                       </Typography>
                       {currentStep.type !== 'narration' && (
                         <Button
@@ -1253,6 +1344,64 @@ const RoleplayGame: React.FC = () => {
           {snackbarMessage}
         </Alert>
       </Snackbar>
+
+      {/* --- Definition Modal --- Added Section */}
+      <Modal
+        open={showDefinitionModal}
+        onClose={handleCloseModal} // Use the new handler
+        aria-labelledby="definition-modal-title"
+        aria-describedby="definition-modal-description"
+      >
+        <Box sx={modalStyle}>
+          <Typography id="definition-modal-title" variant="h6" component="h2" gutterBottom>
+            Definition: "{selectedWord}"
+          </Typography>
+          <Box id="definition-modal-description" sx={{ mt: 2 }}>
+            {isFetchingDefinition ? (
+              <Box sx={{ display: 'flex', justifyContent: 'center', my: 3 }}>
+                <CircularProgress />
+              </Box>
+            ) : definitionResult ? (
+              Array.isArray(definitionResult) ? (
+                // Display definitions from DictionaryEntry[]
+                definitionResult.map((entry, idx) => (
+                  <Box key={idx} sx={{ mb: 2 }}>
+                    {entry.meanings.map((meaning, mIdx) => (
+                      <Box key={mIdx} sx={{ mb: 1 }}>
+                        <Typography variant="subtitle1" sx={{ fontWeight: 'bold' }}>
+                          {meaning.partOfSpeech}
+                        </Typography>
+                        {meaning.definitions.slice(0, 2).map((def, dIdx) => ( // Show first 2 definitions
+                          <Box key={dIdx} sx={{ pl: 2, mb: 0.5 }}>
+                            <Typography variant="body2">• {def.definition}</Typography>
+                            {def.example && (
+                              <Typography variant="caption" sx={{ fontStyle: 'italic', color: 'text.secondary' }}>
+                                Ex: {def.example}
+                              </Typography>
+                            )}
+                          </Box>
+                        ))}
+                      </Box>
+                    ))}
+                  </Box>
+                ))
+              ) : (
+                // Display error from DictionaryError
+                <Alert severity="warning">
+                  <Typography variant="body2">{definitionResult.title}</Typography>
+                  <Typography variant="caption">{definitionResult.message} {definitionResult.resolution}</Typography>
+                </Alert>
+              )
+            ) : (
+              // Should not happen if modal opens only after click, but as fallback:
+              <Typography>No definition available.</Typography>
+            )
+            }
+          </Box>
+          <Button onClick={handleCloseModal} sx={{ mt: 3 }}>Close</Button>
+        </Box>
+      </Modal>
+      {/* --- End Definition Modal -- */}
     </>
   );
 };
