@@ -481,40 +481,61 @@ const RoleplayGame: React.FC = () => {
 
   // handleUserResponse needed by handleSpeechResult
   const handleUserResponse = useCallback((correct: boolean, text: string, matchAccuracy?: number) => {
-    if (!isMounted.current) return;
+    console.log(`handleUserResponse called with: correct=${correct}, text="${text}"`); // Log function entry
+    if (!isMounted.current) {
+      console.log('handleUserResponse: Component not mounted, exiting.');
+      return;
+    }
     const selectedOption = currentStep?.userOptions.find(option => option.text === text);
+    console.log('handleUserResponse: Found selectedOption:', selectedOption);
 
     if (correct) {
+      console.log('handleUserResponse: Answer is correct.');
       playSound.correct();
       setFeedback({ type: 'success', text: selectedOption?.feedback || 'Correct!' });
       if (selectedOption?.rewardPoints && context) {
+        console.log(`handleUserResponse: Awarding ${selectedOption.rewardPoints} points.`);
         context.updateScore(selectedOption.rewardPoints);
         setScore(prev => prev + (selectedOption?.rewardPoints || 0));
       }
       setShowProgressBar(true);
+      console.log('handleUserResponse: Setting timeout to advance step.');
       const nextStepTimer = setTimeout(() => {
-        if (!isMounted.current) return;
+        console.log('handleUserResponse: Timeout triggered.');
+        if (!isMounted.current) {
+          console.log('handleUserResponse: Timeout: Component unmounted.');
+          return;
+        }
         const nextId = selectedOption?.nextStepId;
+        console.log(`handleUserResponse: Timeout: nextId from option is "${nextId}"`);
         if (nextId) {
-            setCurrentStepId(nextId);
+          console.log(`handleUserResponse: Timeout: Setting current step to nextId: "${nextId}"`);
+          setCurrentStepId(nextId);
         } else {
-            const currentIndex = conversationSteps.findIndex(step => step.id === currentStepId);
-            if (currentIndex !== -1 && currentIndex < conversationSteps.length - 1) {
-                setCurrentStepId(conversationSteps[currentIndex + 1].id);
-            } else {
-                handleCompleteRoleplay();
-            }
+          console.log('handleUserResponse: Timeout: No nextId found, calculating next index.');
+          const currentIndex = conversationSteps.findIndex(step => step.id === currentStepId);
+          console.log(`handleUserResponse: Timeout: Current index is ${currentIndex}. Total steps: ${conversationSteps.length}`);
+          if (currentIndex !== -1 && currentIndex < conversationSteps.length - 1) {
+            const nextCalculatedId = conversationSteps[currentIndex + 1].id;
+            console.log(`handleUserResponse: Timeout: Setting current step to next calculated ID: "${nextCalculatedId}"`);
+            setCurrentStepId(nextCalculatedId);
+          } else {
+            console.log('handleUserResponse: Timeout: Reached end or invalid index, calling handleCompleteRoleplay.');
+            handleCompleteRoleplay();
+          }
         }
         setFeedback({ type: '', text: '' });
         setShowInput(false);
         setShowProgressBar(false);
+        console.log('handleUserResponse: Timeout: State updates complete.');
       }, 1500);
       return () => clearTimeout(nextStepTimer);
 
     } else {
-        playSound.incorrect();
-        setFeedback({ type: 'error', text: selectedOption?.feedback || 'Incorrect. Try again.' });
-        setShowInput(true);
+      console.log('handleUserResponse: Answer is incorrect.');
+      playSound.incorrect();
+      setFeedback({ type: 'error', text: selectedOption?.feedback || 'Incorrect. Try again.' });
+      setShowInput(true);
     }
   }, [isMounted, currentStep, setCurrentStepId, setFeedback, setScore, context, setShowInput, setShowProgressBar, handleCompleteRoleplay, currentStepId]);
 
@@ -551,11 +572,24 @@ const RoleplayGame: React.FC = () => {
 
   // handlePronunciation needed by auto-pronunciation useEffect
   const handlePronunciation = useCallback((text: string) => {
-    if (!isMounted.current) return;
+    if (!isMounted.current || !text) return;
+    
     pronounceSpanish(
       text,
-      () => { if (isMounted.current) setIsPronouncing(true); },
-      () => { if (isMounted.current) setIsPronouncing(false); }
+      () => { 
+        if (isMounted.current) {
+          setIsPronouncing(true);
+          // Cancel any ongoing speech when starting new one
+          if (window.speechSynthesis?.speaking) {
+            window.speechSynthesis.cancel();
+          }
+        }
+      },
+      () => { 
+        if (isMounted.current) {
+          setIsPronouncing(false);
+        }
+      }
     ).catch(() => {
       if (isMounted.current) {
         setSnackbarMessage('Failed to pronounce text. Please try again.');
@@ -574,7 +608,8 @@ const RoleplayGame: React.FC = () => {
       if (recognitionRef.current) {
         recognitionRef.current.stop();
       }
-      if (window.speechSynthesis && window.speechSynthesis.speaking) {
+      // Cancel any ongoing speech when component unmounts
+      if (window.speechSynthesis?.speaking) {
         window.speechSynthesis.cancel();
       }
     };
@@ -624,22 +659,26 @@ const RoleplayGame: React.FC = () => {
   }, [handleSpeechResult, setSnackbarMessage, setSnackbarOpen, setIsListening]);
 
   useEffect(() => { // Auto-pronunciation on step change
-    if (currentStep && currentStep.npc && isMounted.current) {
+    if (currentStep?.npc && isMounted.current) {
+      // Cancel any ongoing speech before starting new one
+      if (window.speechSynthesis?.speaking) {
+        window.speechSynthesis.cancel();
+      }
+      
       const timer = setTimeout(() => {
         if (isMounted.current) {
-           handlePronunciation(currentStep.npc);
+          handlePronunciation(currentStep.npc);
         }
       }, 150);
 
-      return () => clearTimeout(timer);
+      return () => {
+        clearTimeout(timer);
+        // Cancel speech if step changes during pronunciation
+        if (window.speechSynthesis?.speaking) {
+          window.speechSynthesis.cancel();
+        }
+      };
     }
-
-    // Optional: Clean up synthesis if the step changes before speech finishes
-    return () => {
-      if (window.speechSynthesis && window.speechSynthesis.speaking) {
-        window.speechSynthesis.cancel();
-      }
-    };
   }, [currentStep, handlePronunciation]);
 
   // This function is used by the mic button component
@@ -776,8 +815,7 @@ const RoleplayGame: React.FC = () => {
           <Button
             key={index}
             variant="contained"
-            // Replace direct text rendering with clickable text
-            // onClick={() => handleUserResponse(option.correct, option.text)} 
+            onClick={() => handleUserResponse(option.correct, option.text)}
             sx={{
               bgcolor: '#6C63FF',
               borderRadius: '50px',

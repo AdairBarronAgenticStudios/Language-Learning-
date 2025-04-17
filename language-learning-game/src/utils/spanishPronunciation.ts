@@ -35,7 +35,7 @@ export const playSound = {
   }
 };
 
-// Text-to-speech fallback with better browser compatibility
+// Text-to-speech with improved reliability
 export const speakSpanish = (text: string): Promise<boolean> => {
   return new Promise((resolve) => {
     try {
@@ -45,24 +45,44 @@ export const speakSpanish = (text: string): Promise<boolean> => {
         return;
       }
 
-      // Force stop any ongoing speech
+      // Cancel any ongoing speech
       window.speechSynthesis.cancel();
 
       const utterance = new SpeechSynthesisUtterance(text);
       utterance.lang = 'es-ES';
-      utterance.rate = 0.7;
+      utterance.rate = 0.8; // Slightly faster but still clear
       utterance.pitch = 1.0;
       utterance.volume = 1.0;
 
-      // Initialize voices synchronously first
-      const voices = speechSynthesis.getVoices();
-      const spanishVoice = voices.find(voice => voice.lang.startsWith('es'));
+      // Get available voices
+      let voices = window.speechSynthesis.getVoices();
       
-      if (spanishVoice) {
-        utterance.voice = spanishVoice;
-        console.log('Using Spanish voice:', spanishVoice.name);
+      // If voices array is empty, wait for them to load
+      if (voices.length === 0) {
+        window.speechSynthesis.onvoiceschanged = () => {
+          voices = window.speechSynthesis.getVoices();
+          const spanishVoice = voices.find(voice => 
+            voice.lang.startsWith('es') && voice.name.includes('Monica')
+          ) || voices.find(voice => 
+            voice.lang.startsWith('es')
+          );
+
+          if (spanishVoice) {
+            utterance.voice = spanishVoice;
+            console.log('Using Spanish voice:', spanishVoice.name);
+          }
+        };
       } else {
-        console.log('No Spanish voice found, using default voice');
+        const spanishVoice = voices.find(voice => 
+          voice.lang.startsWith('es') && voice.name.includes('Monica')
+        ) || voices.find(voice => 
+          voice.lang.startsWith('es')
+        );
+
+        if (spanishVoice) {
+          utterance.voice = spanishVoice;
+          console.log('Using Spanish voice:', spanishVoice.name);
+        }
       }
 
       // Set up event handlers
@@ -76,22 +96,15 @@ export const speakSpanish = (text: string): Promise<boolean> => {
         resolve(false);
       };
 
-      // Ensure the speech synthesis is in a clean state
-      if (speechSynthesis.speaking) {
-        speechSynthesis.cancel();
+      // Ensure clean state and speak
+      if (window.speechSynthesis.speaking) {
+        window.speechSynthesis.cancel();
       }
 
-      // Add the utterance to the queue and start speaking
-      speechSynthesis.speak(utterance);
-
-      // Workaround for Chrome bug where speech can get stuck
-      const timeoutMs = text.length * 100;
+      // Small delay to ensure clean state
       setTimeout(() => {
-        if (speechSynthesis.speaking) {
-          speechSynthesis.pause();
-          speechSynthesis.resume();
-        }
-      }, timeoutMs);
+        window.speechSynthesis.speak(utterance);
+      }, 50);
 
     } catch (error) {
       console.error('Speech synthesis error:', error);
@@ -100,7 +113,7 @@ export const speakSpanish = (text: string): Promise<boolean> => {
   });
 };
 
-// The main pronunciation function that tries multiple approaches
+// The main pronunciation function with improved reliability
 export const pronounceSpanish = async (
   text: string, 
   onStart: () => void,
@@ -109,18 +122,25 @@ export const pronounceSpanish = async (
   try {
     onStart();
     
-    // Try speech synthesis
-    const speechSuccess = await speakSpanish(text);
+    // Ensure speech synthesis is in a clean state
+    if (window.speechSynthesis?.speaking) {
+      window.speechSynthesis.cancel();
+    }
+
+    // Try speech synthesis with timeout
+    const speechPromise = speakSpanish(text);
+    const timeoutPromise = new Promise<boolean>(resolve => {
+      setTimeout(() => resolve(false), 10000); // 10 second timeout
+    });
+
+    // Race between speech completion and timeout
+    const success = await Promise.race([speechPromise, timeoutPromise]);
     
-    if (!speechSuccess) {
-      // If speech synthesis fails, show a message to the user
-      console.warn('Speech synthesis failed. Please try another browser or device.');
+    if (!success) {
+      console.warn('Speech synthesis failed or timed out');
     }
     
-    // Always complete after a reasonable delay
-    setTimeout(() => {
-      onComplete();
-    }, Math.min(text.length * 100, 5000)); // Proportional to text length, max 5 seconds
+    onComplete();
   } catch (error) {
     console.error('Pronunciation error:', error);
     onComplete();
